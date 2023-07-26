@@ -4815,6 +4815,8 @@ func (m *ListReceiversRequest) validate(all bool) error {
 
 	var errors []error
 
+	// no validation rules for Labels
+
 	if len(errors) > 0 {
 		return ListReceiversRequestMultiError(errors)
 	}

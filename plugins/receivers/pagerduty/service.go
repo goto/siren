@@ -34,7 +34,7 @@ func NewPluginService(cfg AppConfig, opts ...ServiceOption) *PluginService {
 }
 
 // TODO validation could be done by default and using validator library but we need to use generic for it
-func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
+func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any, parentID uint64) (map[string]any, error) {
 	receiverConfig := &ReceiverConfig{}
 	if err := mapstructure.Decode(configurations, receiverConfig); err != nil {
 		return nil, fmt.Errorf("failed to transform configurations to receiver config: %w", err)

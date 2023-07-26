@@ -22,7 +22,7 @@ func NewPluginService() *PluginService {
 	return &PluginService{}
 }
 
-func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, receiverConfigMap map[string]any) (map[string]any, error) {
+func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, receiverConfigMap map[string]any, parentID uint64) (map[string]any, error) {
 	receiverConfig := &ReceiverConfig{}
 	if err := mapstructure.Decode(receiverConfigMap, receiverConfig); err != nil {
 		return nil, fmt.Errorf("failed to transform configurations to receiver config: %w", err)

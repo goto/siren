@@ -14,6 +14,7 @@ type Receiver struct {
 	Labels         pgc.StringStringMap `db:"labels"`
 	Configurations pgc.StringAnyMap    `db:"configurations"`
 	Data           pgc.StringAnyMap    `db:"-"` //TODO do we need this?
+	ParentID       uint64              `db:"parent_id"`
 	CreatedAt      time.Time           `db:"created_at"`
 	UpdatedAt      time.Time           `db:"updated_at"`
 }
@@ -25,6 +26,7 @@ func (rcv *Receiver) FromDomain(t receiver.Receiver) {
 	rcv.Labels = t.Labels
 	rcv.Configurations = pgc.StringAnyMap(t.Configurations)
 	rcv.Data = t.Data
+	rcv.ParentID = t.ParentID
 	rcv.CreatedAt = t.CreatedAt
 	rcv.UpdatedAt = t.UpdatedAt
 }
@@ -37,6 +39,7 @@ func (rcv *Receiver) ToDomain() *receiver.Receiver {
 		Labels:         rcv.Labels,
 		Configurations: rcv.Configurations,
 		Data:           rcv.Data,
+		ParentID:       rcv.ParentID,
 		CreatedAt:      rcv.CreatedAt,
 		UpdatedAt:      rcv.UpdatedAt,
 	}

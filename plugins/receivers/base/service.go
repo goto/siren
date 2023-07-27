@@ -10,7 +10,7 @@ import (
 // UnimplementedService is a base receiver plugin service layer
 type UnimplementedService struct{}
 
-func (s *UnimplementedService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any, parentID uint64) (map[string]any, error) {
+func (s *UnimplementedService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
 	return configurations, nil
 }
 

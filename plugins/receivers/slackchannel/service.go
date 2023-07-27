@@ -24,11 +24,7 @@ func NewPluginService(cfg slack.AppConfig, cryptoClient slack.Encryptor, opts ..
 	}
 }
 
-func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any, parentID uint64) (map[string]any, error) {
-	if parentID == 0 {
-		return nil, fmt.Errorf("type slack_channel needs receiver parent ID")
-	}
-
+func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
 	receiverConfig := &ReceiverConfig{}
 	if err := mapstructure.Decode(configurations, receiverConfig); err != nil {
 		return nil, fmt.Errorf("failed to transform configurations to receiver config: %w", err)

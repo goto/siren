@@ -50,7 +50,7 @@ func NewPluginService(cfg AppConfig, cryptoClient Encryptor, opts ...ServiceOpti
 	return s
 }
 
-func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any, parentID uint64) (map[string]any, error) {
+func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
 	slackCredentialConfig := &SlackCredentialConfig{}
 	if err := mapstructure.Decode(configurations, slackCredentialConfig); err != nil {
 		return nil, fmt.Errorf("failed to transform configurations to pre transform config: %w", err)

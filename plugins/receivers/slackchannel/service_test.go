@@ -247,23 +247,24 @@ func TestPluginService_PreHookDBTransformConfigs(t *testing.T) {
 		name           string
 		setup          func(*mocks.Encryptor)
 		configurations map[string]any
-		parentID       uint64
 		wantErr        bool
 	}{
 		{
-			name:    "should return error if parent ID is zero",
+			name:    "should return error if channel_name is missing",
 			wantErr: true,
 		},
 		{
-			name:     "shouldd return non error if parent ID is not zero",
-			parentID: 1,
-			wantErr:  false,
+			name: "shouldd return non error if channel_name is not missing",
+			configurations: map[string]any{
+				"channel_name": "a-channel",
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &slackchannel.PluginService{}
-			_, err := s.PreHookDBTransformConfigs(context.TODO(), tt.configurations, tt.parentID)
+			_, err := s.PreHookDBTransformConfigs(context.TODO(), tt.configurations)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PluginService.PreHookDBTransformConfigs() error = %v, wantErr %v", err, tt.wantErr)
 				return

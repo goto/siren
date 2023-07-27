@@ -66,12 +66,16 @@ func (s *Service) List(ctx context.Context, flt Filter) ([]Receiver, error) {
 }
 
 func (s *Service) Create(ctx context.Context, rcv *Receiver) error {
+	if err := rcv.Validate(); err != nil {
+		return errors.ErrInvalid.WithMsgf("%s", err.Error())
+	}
+
 	receiverPlugin, err := s.getReceiverPlugin(rcv.Type)
 	if err != nil {
 		return err
 	}
 
-	rcv.Configurations, err = receiverPlugin.PreHookDBTransformConfigs(ctx, rcv.Configurations, rcv.ParentID)
+	rcv.Configurations, err = receiverPlugin.PreHookDBTransformConfigs(ctx, rcv.Configurations)
 	if err != nil {
 		telemetry.IncrementInt64Counter(ctx, telemetry.MetricReceiverHookFailed,
 			tag.Upsert(telemetry.TagReceiverType, rcv.Type),
@@ -175,7 +179,7 @@ func (s *Service) Update(ctx context.Context, rcv *Receiver) error {
 		return err
 	}
 
-	rcv.Configurations, err = receiverPlugin.PreHookDBTransformConfigs(ctx, rcv.Configurations, rcv.ParentID)
+	rcv.Configurations, err = receiverPlugin.PreHookDBTransformConfigs(ctx, rcv.Configurations)
 	if err != nil {
 		return errors.ErrInvalid.WithMsgf("%s", err.Error())
 	}
@@ -210,7 +214,7 @@ func (s *Service) ExpandParents(ctx context.Context, rcvs []Receiver) ([]Receive
 		uniqueParentIDs = append(uniqueParentIDs, k)
 	}
 
-	parentReceivers, err := s.List(ctx, Filter{ReceiverIDs: uniqueParentIDs})
+	parentReceivers, err := s.List(ctx, Filter{ReceiverIDs: uniqueParentIDs, Expanded: true})
 	if err != nil {
 		return nil, fmt.Errorf("failure when expanding receiver parents: %w", err)
 	}

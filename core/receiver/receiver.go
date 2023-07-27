@@ -2,6 +2,7 @@ package receiver
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -29,4 +30,12 @@ type Receiver struct {
 
 	// Type should be immutable
 	Type string `json:"type"`
+}
+
+func (r *Receiver) Validate() error {
+	if r.Type == TypeSlackChannel && r.ParentID == 0 {
+		return fmt.Errorf("type slack_channel needs receiver parent ID")
+	}
+
+	return nil
 }

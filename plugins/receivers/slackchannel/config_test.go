@@ -23,10 +23,7 @@ func TestReceiverConfig(t *testing.T) {
 			{
 				name: "return nil if all required fields are present",
 				c: slackchannel.ReceiverConfig{
-					SlackReceiverConfig: slack.ReceiverConfig{
-						Token:     "token",
-						Workspace: "workspace",
-					},
+					ChannelName: "a-channel",
 				},
 				wantErr: false,
 			},

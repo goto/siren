@@ -131,25 +131,25 @@ func (_c *ConfigResolver_PostHookDBTransformConfigs_Call) RunAndReturn(run func(
 	return _c
 }
 
-// PreHookDBTransformConfigs provides a mock function with given fields: ctx, configs, parentID
-func (_m *ConfigResolver) PreHookDBTransformConfigs(ctx context.Context, configs map[string]interface{}, parentID uint64) (map[string]interface{}, error) {
-	ret := _m.Called(ctx, configs, parentID)
+// PreHookDBTransformConfigs provides a mock function with given fields: ctx, configs
+func (_m *ConfigResolver) PreHookDBTransformConfigs(ctx context.Context, configs map[string]interface{}) (map[string]interface{}, error) {
+	ret := _m.Called(ctx, configs)
 
 	var r0 map[string]interface{}
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}, uint64) (map[string]interface{}, error)); ok {
-		return rf(ctx, configs, parentID)
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) (map[string]interface{}, error)); ok {
+		return rf(ctx, configs)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}, uint64) map[string]interface{}); ok {
-		r0 = rf(ctx, configs, parentID)
+	if rf, ok := ret.Get(0).(func(context.Context, map[string]interface{}) map[string]interface{}); ok {
+		r0 = rf(ctx, configs)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]interface{})
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, map[string]interface{}, uint64) error); ok {
-		r1 = rf(ctx, configs, parentID)
+	if rf, ok := ret.Get(1).(func(context.Context, map[string]interface{}) error); ok {
+		r1 = rf(ctx, configs)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -165,14 +165,13 @@ type ConfigResolver_PreHookDBTransformConfigs_Call struct {
 // PreHookDBTransformConfigs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - configs map[string]interface{}
-//   - parentID uint64
-func (_e *ConfigResolver_Expecter) PreHookDBTransformConfigs(ctx interface{}, configs interface{}, parentID interface{}) *ConfigResolver_PreHookDBTransformConfigs_Call {
-	return &ConfigResolver_PreHookDBTransformConfigs_Call{Call: _e.mock.On("PreHookDBTransformConfigs", ctx, configs, parentID)}
+func (_e *ConfigResolver_Expecter) PreHookDBTransformConfigs(ctx interface{}, configs interface{}) *ConfigResolver_PreHookDBTransformConfigs_Call {
+	return &ConfigResolver_PreHookDBTransformConfigs_Call{Call: _e.mock.On("PreHookDBTransformConfigs", ctx, configs)}
 }
 
-func (_c *ConfigResolver_PreHookDBTransformConfigs_Call) Run(run func(ctx context.Context, configs map[string]interface{}, parentID uint64)) *ConfigResolver_PreHookDBTransformConfigs_Call {
+func (_c *ConfigResolver_PreHookDBTransformConfigs_Call) Run(run func(ctx context.Context, configs map[string]interface{})) *ConfigResolver_PreHookDBTransformConfigs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(map[string]interface{}), args[2].(uint64))
+		run(args[0].(context.Context), args[1].(map[string]interface{}))
 	})
 	return _c
 }
@@ -182,7 +181,7 @@ func (_c *ConfigResolver_PreHookDBTransformConfigs_Call) Return(_a0 map[string]i
 	return _c
 }
 
-func (_c *ConfigResolver_PreHookDBTransformConfigs_Call) RunAndReturn(run func(context.Context, map[string]interface{}, uint64) (map[string]interface{}, error)) *ConfigResolver_PreHookDBTransformConfigs_Call {
+func (_c *ConfigResolver_PreHookDBTransformConfigs_Call) RunAndReturn(run func(context.Context, map[string]interface{}) (map[string]interface{}, error)) *ConfigResolver_PreHookDBTransformConfigs_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -55,6 +55,7 @@ func (s *GRPCServer) CreateReceiver(ctx context.Context, req *sirenv1beta1.Creat
 		Type:           req.GetType(),
 		Labels:         req.GetLabels(),
 		Configurations: req.GetConfigurations().AsMap(),
+		ParentID:       req.GetParentId(),
 	}
 
 	err := s.receiverService.Create(ctx, rcv)
@@ -103,6 +104,7 @@ func (s *GRPCServer) UpdateReceiver(ctx context.Context, req *sirenv1beta1.Updat
 		Name:           req.GetName(),
 		Labels:         req.GetLabels(),
 		Configurations: req.GetConfigurations().AsMap(),
+		ParentID:       req.GetParentId(),
 	}
 
 	if err := s.receiverService.Update(ctx, rcv); err != nil {

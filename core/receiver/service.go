@@ -36,11 +36,13 @@ func (s *Service) List(ctx context.Context, flt Filter) ([]Receiver, error) {
 		return nil, err
 	}
 
-	if flt.Expanded {
-		receivers, err = s.ExpandParents(ctx, receivers)
-		if err != nil {
-			return nil, err
-		}
+	if !flt.Expanded {
+		return receivers, nil
+	}
+
+	receivers, err = s.ExpandParents(ctx, receivers)
+	if err != nil {
+		return nil, err
 	}
 
 	domainReceivers := make([]Receiver, 0, len(receivers))
@@ -59,6 +61,7 @@ func (s *Service) List(ctx context.Context, flt Filter) ([]Receiver, error) {
 
 		domainReceivers = append(domainReceivers, rcv)
 	}
+
 	return domainReceivers, nil
 }
 
@@ -75,7 +78,7 @@ func (s *Service) Create(ctx context.Context, rcv *Receiver) error {
 			tag.Upsert(telemetry.TagHookCondition, telemetry.HookConditionPreHookDB),
 		)
 
-		return err
+		return errors.ErrInvalid.WithMsgf("%s", err.Error())
 	}
 
 	err = s.repository.Create(ctx, rcv)
@@ -120,18 +123,20 @@ func (s *Service) Get(ctx context.Context, id uint64, gopts ...GetOption) (*Rece
 		return nil, err
 	}
 
-	if opt.withExpand {
-		receivers, err := s.ExpandParents(ctx, []Receiver{*rcv})
-		if err != nil {
-			return nil, err
-		}
-		rcv = &receivers[0]
+	if !opt.withExpand {
+		return rcv, nil
 	}
 
 	receiverPlugin, err := s.getReceiverPlugin(rcv.Type)
 	if err != nil {
 		return nil, err
 	}
+
+	receivers, err := s.ExpandParents(ctx, []Receiver{*rcv})
+	if err != nil {
+		return nil, err
+	}
+	rcv = &receivers[0]
 
 	transformedConfigs, err := receiverPlugin.PostHookDBTransformConfigs(ctx, rcv.Configurations)
 	if err != nil {
@@ -172,7 +177,7 @@ func (s *Service) Update(ctx context.Context, rcv *Receiver) error {
 
 	rcv.Configurations, err = receiverPlugin.PreHookDBTransformConfigs(ctx, rcv.Configurations, rcv.ParentID)
 	if err != nil {
-		return err
+		return errors.ErrInvalid.WithMsgf("%s", err.Error())
 	}
 
 	if err = s.repository.Update(ctx, rcv); err != nil {

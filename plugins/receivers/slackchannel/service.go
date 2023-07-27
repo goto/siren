@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"github.com/goto/siren/core/notification"
+	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/plugins/receivers/base"
 	"github.com/goto/siren/plugins/receivers/slack"
+	"github.com/mitchellh/mapstructure"
 )
 
 // PluginService is a plugin service layer for slack channel type
@@ -24,7 +26,16 @@ func NewPluginService(cfg slack.AppConfig, cryptoClient slack.Encryptor, opts ..
 
 func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any, parentID uint64) (map[string]any, error) {
 	if parentID == 0 {
-		return nil, fmt.Errorf("type `slackchannel` needs receiver parent ID")
+		return nil, fmt.Errorf("type slack_channel needs receiver parent ID")
+	}
+
+	receiverConfig := &ReceiverConfig{}
+	if err := mapstructure.Decode(configurations, receiverConfig); err != nil {
+		return nil, fmt.Errorf("failed to transform configurations to receiver config: %w", err)
+	}
+
+	if err := receiverConfig.Validate(); err != nil {
+		return nil, errors.ErrInvalid.WithMsgf(err.Error())
 	}
 
 	return configurations, nil

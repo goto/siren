@@ -60,6 +60,7 @@ func TestNotificationConfig(t *testing.T) {
 							Token:     "token",
 							Workspace: "workspace",
 						},
+						ChannelName: "a-channel",
 					},
 				},
 				wantErr: false,

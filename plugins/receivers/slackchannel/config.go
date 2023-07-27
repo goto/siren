@@ -1,6 +1,8 @@
 package slackchannel
 
 import (
+	"fmt"
+
 	"github.com/goto/siren/plugins/receivers/slack"
 )
 
@@ -12,8 +14,8 @@ type ReceiverConfig struct {
 }
 
 func (c *ReceiverConfig) Validate() error {
-	if err := c.SlackReceiverConfig.Validate(); err != nil {
-		return err
+	if c.ChannelName == "" {
+		return fmt.Errorf("invalid slack_channel receiver config, channel_name can't be empty")
 	}
 	return nil
 }
@@ -37,6 +39,9 @@ type NotificationConfig struct {
 // channel_name is not mandatory because in NotifyToReceiver flow, channel_name
 // is being passed from the request (not from the config)
 func (c *NotificationConfig) Validate() error {
+	if err := c.ReceiverConfig.SlackReceiverConfig.Validate(); err != nil {
+		return err
+	}
 	if err := c.ReceiverConfig.Validate(); err != nil {
 		return err
 	}

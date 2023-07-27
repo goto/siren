@@ -5099,6 +5099,8 @@ func (m *CreateReceiverRequest) validate(all bool) error {
 		}
 	}
 
+	// no validation rules for ParentId
+
 	if len(errors) > 0 {
 		return CreateReceiverRequestMultiError(errors)
 	}
@@ -5585,6 +5587,8 @@ func (m *UpdateReceiverRequest) validate(all bool) error {
 			}
 		}
 	}
+
+	// no validation rules for ParentId
 
 	if len(errors) > 0 {
 		return UpdateReceiverRequestMultiError(errors)

@@ -428,7 +428,7 @@ func TestService_UpdateReceiver(t *testing.T) {
 							"token": "key",
 						},
 					}, nil)
-					ss.EXPECT().PreHookDBTransformConfigs(mock.AnythingOfType("*context.emptyCtx"), map[string]any{"token": "key"}, 0).Return(nil, errors.New("some error"))
+					ss.EXPECT().PreHookDBTransformConfigs(mock.AnythingOfType("*context.emptyCtx"), map[string]any{"token": "key"}, uint64(0)).Return(nil, errors.New("some error"))
 				},
 				Rcv: &receiver.Receiver{
 					ID:   123,

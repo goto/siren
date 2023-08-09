@@ -13,7 +13,7 @@ require (
 	github.com/go-openapi/runtime v0.19.29
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/goto/salt v0.2.5-0.20230315041840-c5caaf9c5051
+	github.com/goto/salt v0.3.3
 	github.com/grafana/cortex-tools v0.8.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.1

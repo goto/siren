@@ -48,7 +48,7 @@ func (d *PostgresTracer) StartSpan(ctx context.Context, op string, tableName str
 	}
 
 	// Refer https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
-	ctx, span := trace.StartSpan(ctx, fmt.Sprintf("%s %s.%s", op, d.dbName, tableName), trace.WithSpanKind(trace.SpanKindClient))
+	traceCtx, span := trace.StartSpan(ctx, fmt.Sprintf("%s %s.%s", op, d.dbName, tableName), trace.WithSpanKind(trace.SpanKindClient))
 
 	traceAttributes := []trace.Attribute{
 		trace.StringAttribute("db.system", d.dbSystem),
@@ -69,7 +69,7 @@ func (d *PostgresTracer) StartSpan(ctx context.Context, op string, tableName str
 
 	d.span = span
 
-	return ctx, span
+	return traceCtx, span
 }
 
 func (d *PostgresTracer) StopSpan() {

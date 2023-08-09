@@ -31,7 +31,7 @@ func (msg *MessagingTracer) StartSpan(ctx context.Context, op string, spanAttrib
 	}
 
 	// Refer https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/messaging.md
-	ctx, span := trace.StartSpan(ctx, fmt.Sprintf("notification_queue %s", op), trace.WithSpanKind(trace.SpanKindClient))
+	traceCtx, span := trace.StartSpan(ctx, fmt.Sprintf("notification_queue %s", op), trace.WithSpanKind(trace.SpanKindClient))
 
 	traceAttributes := []trace.Attribute{
 		trace.StringAttribute("messaging.system", msg.queueSystem),
@@ -48,7 +48,7 @@ func (msg *MessagingTracer) StartSpan(ctx context.Context, op string, spanAttrib
 
 	msg.span = span
 
-	return ctx, span
+	return traceCtx, span
 }
 
 func (msg *MessagingTracer) StopSpan() {

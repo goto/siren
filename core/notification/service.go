@@ -147,11 +147,11 @@ func (s *Service) Dispatch(ctx context.Context, n Notification) error {
 		return err
 	}
 
-	ctx, span := s.messagingTracer.StartSpan(ctx, "prepare_message",
+	traceCtx, span := s.messagingTracer.StartSpan(ctx, "prepare_message",
 		trace.StringAttribute("messaging.notification_id", n.ID),
 		trace.StringAttribute("messaging.routing_method", n.Type),
 	)
-	messages, notificationLogs, hasSilenced, err := dispatcherService.PrepareMessage(ctx, n)
+	messages, notificationLogs, hasSilenced, err := dispatcherService.PrepareMessage(traceCtx, n)
 	span.End()
 	if err != nil {
 		return err
@@ -161,11 +161,11 @@ func (s *Service) Dispatch(ctx context.Context, n Notification) error {
 		return fmt.Errorf("something wrong and no messages will be sent with notification: %v", n)
 	}
 
-	if err := s.logService.LogNotifications(ctx, notificationLogs...); err != nil {
+	if err := s.logService.LogNotifications(traceCtx, notificationLogs...); err != nil {
 		return fmt.Errorf("failed logging notifications: %w", err)
 	}
 
-	if err := s.alertService.UpdateSilenceStatus(ctx, n.AlertIDs, hasSilenced, len(messages) != 0); err != nil {
+	if err := s.alertService.UpdateSilenceStatus(traceCtx, n.AlertIDs, hasSilenced, len(messages) != 0); err != nil {
 		return fmt.Errorf("failed updating silence status: %w", err)
 	}
 

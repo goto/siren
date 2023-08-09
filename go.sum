@@ -1199,6 +1199,8 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gosimple/slug v1.1.1/go.mod h1:ER78kgg1Mv0NQGlXiDe57DpCyfbNywXXZ9mIorhxAf0=
 github.com/goto/salt v0.2.5-0.20230315041840-c5caaf9c5051 h1:3lIYSYJavOb+/AIxIB5J73QC4O440FWa3lUjqtQuBQw=
 github.com/goto/salt v0.2.5-0.20230315041840-c5caaf9c5051/go.mod h1:L8PtSbpUFFo/Yh5YZ0FTgV9FIAvtqGdNa2BkA5M3jWo=
+github.com/goto/salt v0.3.3 h1:lsUsY9VuwmzfB1B9ndJE6BI5vx4Z7pupIX4uP/LxDys=
+github.com/goto/salt v0.3.3/go.mod h1:L8PtSbpUFFo/Yh5YZ0FTgV9FIAvtqGdNa2BkA5M3jWo=
 github.com/grafana-tools/sdk v0.0.0-20210310213032-c3f3511b3e9b/go.mod h1:uby+6hPUCRVNG/iAZKCOlaq5YhyK0oKMRke+FDesZdw=
 github.com/grafana/cortex-tools v0.8.0 h1:k0JJylHbbZrL3fpHKBDWXdOGTTB64jSLULU360sWE2I=
 github.com/grafana/cortex-tools v0.8.0/go.mod h1:Yy51fwed+AsKxq4rjhUleBitOxp7hzlOl/AS40vYEds=

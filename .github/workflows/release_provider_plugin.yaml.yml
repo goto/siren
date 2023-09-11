@@ -1,0 +1,40 @@
+name: Release Provider Plugin(s)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "version of plugin, must have the same major version of siren"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: { plugin_name: ["cortex"] }
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get release tag
+        id: get_version
+        uses: battila7/get-version-action@v2
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+          workdir: plugins/providers/${{ matrix.plugin_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GO_RELEASER_TOKEN }}
+          PLUGIN_DIR_NAME: ${{ matrix.plugin_name }}
+          PLUGIN_NAME: siren-${{ matrix.plugin_name }}
+          PLUGIN_VERSION: ${{ inputs.version }}

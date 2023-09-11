@@ -27,7 +27,7 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --clean
-          workdir: plugins/providers/cortex
+          workdir: ${{ github.workspace }}/plugins/providers/cortex
         env:
           GITHUB_TOKEN: ${{ secrets.GO_RELEASER_TOKEN }}
           PLUGIN_DIR_NAME: cortex

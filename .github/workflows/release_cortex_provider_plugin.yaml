@@ -1,4 +1,4 @@
-name: Release Provider Plugin(s)
+name: Release Cortex plugin
 
 on:
   workflow_dispatch:
@@ -11,8 +11,6 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix: { plugin_name: ["cortex"] }
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
@@ -29,9 +27,9 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --clean
-          workdir: plugins/providers/${{ matrix.plugin_name }}
+          workdir: plugins/providers/cortex
         env:
           GITHUB_TOKEN: ${{ secrets.GO_RELEASER_TOKEN }}
-          PLUGIN_DIR_NAME: ${{ matrix.plugin_name }}
-          PLUGIN_NAME: siren-${{ matrix.plugin_name }}
+          PLUGIN_DIR_NAME: cortex
+          PLUGIN_NAME: siren-cortex
           PLUGIN_VERSION: ${{ inputs.version }}

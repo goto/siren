@@ -1,8 +1,6 @@
 package slackchannel
 
 import (
-	"fmt"
-
 	"github.com/goto/siren/plugins/receivers/slack"
 )
 
@@ -14,9 +12,7 @@ type ReceiverConfig struct {
 }
 
 func (c *ReceiverConfig) Validate() error {
-	if c.ChannelName == "" {
-		return fmt.Errorf("invalid slack_channel receiver config, channel_name can't be empty")
-	}
+	// No validation for the channel name, we make it less restrictive for now
 	return nil
 }
 

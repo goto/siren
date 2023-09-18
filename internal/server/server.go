@@ -99,7 +99,7 @@ func RunServer(
 	grpcDialCtx, grpcDialCancel := context.WithTimeout(ctx, time.Second*5)
 	defer grpcDialCancel()
 
-	grpcConn, err := grpc.DialContext(grpcDialCtx, c.addr(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcConn, err := grpc.DialContext(grpcDialCtx, c.grpcAddr(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}

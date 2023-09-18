@@ -39,6 +39,8 @@ type CortexAlertingTestSuite struct {
 func (s *CortexAlertingTestSuite) SetupTest() {
 	apiPort, err := getFreePort()
 	s.Require().Nil(err)
+	apiGRPCPort, err := getFreePort()
+	s.Require().Nil(err)
 
 	s.appConfig = &config.Config{}
 
@@ -48,6 +50,9 @@ func (s *CortexAlertingTestSuite) SetupTest() {
 	s.appConfig.Service = server.Config{
 		Port:          apiPort,
 		EncryptionKey: testEncryptionKey,
+		GRPC: server.GRPCConfig{
+			Port: apiGRPCPort,
+		},
 	}
 	s.appConfig.Notification = notification.Config{
 		MessageHandler: notification.HandlerConfig{
@@ -78,7 +83,7 @@ func (s *CortexAlertingTestSuite) SetupTest() {
 	StartSirenServer(*s.appConfig)
 
 	ctx := context.Background()
-	s.client, s.cancelClient, err = CreateClient(ctx, fmt.Sprintf("localhost:%d", apiPort))
+	s.client, s.cancelClient, err = CreateClient(ctx, fmt.Sprintf("localhost:%d", apiGRPCPort))
 	s.Require().NoError(err)
 
 	_, err = s.client.CreateProvider(ctx, &sirenv1beta1.CreateProviderRequest{

@@ -25,8 +25,9 @@ type CortexRuleTestSuite struct {
 }
 
 func (s *CortexRuleTestSuite) SetupTest() {
-
 	apiPort, err := getFreePort()
+	s.Require().Nil(err)
+	apiGRPCPort, err := getFreePort()
 	s.Require().Nil(err)
 
 	s.appConfig = &config.Config{}
@@ -59,7 +60,7 @@ func (s *CortexRuleTestSuite) SetupTest() {
 	StartSirenServer(*s.appConfig)
 
 	ctx := context.Background()
-	s.client, s.cancelClient, err = CreateClient(ctx, fmt.Sprintf("localhost:%d", apiPort))
+	s.client, s.cancelClient, err = CreateClient(ctx, fmt.Sprintf("localhost:%d", apiGRPCPort))
 	s.Require().NoError(err)
 
 	bootstrapCortexTestData(&s.Suite, ctx, s.client, s.testBench.NginxHost)

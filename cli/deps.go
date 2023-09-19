@@ -73,9 +73,6 @@ func InitDeps(
 	templateRepository := postgres.NewTemplateRepository(pgClient)
 	templateService := template.NewService(templateRepository)
 
-	providerRepository := postgres.NewProviderRepository(pgClient)
-	providerService := provider.NewService(providerRepository)
-
 	logRepository := postgres.NewLogRepository(pgClient)
 	logService := log.NewService(logRepository)
 
@@ -89,9 +86,20 @@ func InitDeps(
 		return nil, nil, nil, nil, nil, err
 	}
 
+	var supportedProviderTypes = []string{}
+	for typ := range providerPlugins {
+		supportedProviderTypes = append(supportedProviderTypes, typ)
+	}
+	providerRepository := postgres.NewProviderRepository(pgClient)
+	providerService := provider.NewService(providerRepository, supportedProviderTypes)
+
 	var configSyncers = make(map[string]namespace.ConfigSyncer, 0)
 	var alertTransformers = make(map[string]alert.AlertTransformer, 0)
 	var ruleUploaders = make(map[string]rule.RuleUploader, 0)
+
+	if len(providerPlugins) == 0 {
+		logger.Warn("no provider plugins found!")
+	}
 
 	for k, pc := range providerPlugins {
 		alertTransformers[k] = pc.(alert.AlertTransformer)

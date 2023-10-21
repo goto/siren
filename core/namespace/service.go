@@ -84,9 +84,28 @@ func (s *Service) Create(ctx context.Context, ns *Namespace) error {
 		return err
 	}
 
-	if err := pluginService.SyncRuntimeConfig(ctx, encryptedNamespace.ID, ns.URN, *prov); err != nil {
+	labels, err := pluginService.SyncRuntimeConfig(ctx, encryptedNamespace.ID, ns.URN, ns.Labels, ns.Provider)
+	if err != nil {
 		if err := s.repository.Rollback(ctx, err); err != nil {
 			return err
+		}
+		return err
+	}
+
+	if encryptedNamespace.Labels == nil {
+		encryptedNamespace.Labels = make(map[string]string)
+	}
+
+	for k, v := range labels {
+		encryptedNamespace.Labels[k] = v
+	}
+
+	if err = s.repository.UpdateLabels(ctx, encryptedNamespace.ID, encryptedNamespace.Labels); err != nil {
+		if err := s.repository.Rollback(ctx, err); err != nil {
+			return err
+		}
+		if errors.As(err, new(NotFoundError)) {
+			return errors.ErrNotFound.WithMsgf(err.Error())
 		}
 		return err
 	}
@@ -142,8 +161,7 @@ func (s *Service) Update(ctx context.Context, ns *Namespace) error {
 	}
 
 	ctx = s.repository.WithTransaction(ctx)
-	err = s.repository.Update(ctx, encryptedNamespace)
-	if err != nil {
+	if err = s.repository.Update(ctx, encryptedNamespace); err != nil {
 		if err := s.repository.Rollback(ctx, err); err != nil {
 			return err
 		}
@@ -159,9 +177,28 @@ func (s *Service) Update(ctx context.Context, ns *Namespace) error {
 		return err
 	}
 
-	if err := pluginService.SyncRuntimeConfig(ctx, encryptedNamespace.ID, ns.URN, ns.Provider); err != nil {
+	labels, err := pluginService.SyncRuntimeConfig(ctx, encryptedNamespace.ID, ns.URN, ns.Labels, ns.Provider)
+	if err != nil {
 		if err := s.repository.Rollback(ctx, err); err != nil {
 			return err
+		}
+		return err
+	}
+
+	if encryptedNamespace.Labels == nil {
+		encryptedNamespace.Labels = make(map[string]string)
+	}
+
+	for k, v := range labels {
+		encryptedNamespace.Labels[k] = v
+	}
+
+	if err = s.repository.UpdateLabels(ctx, encryptedNamespace.ID, encryptedNamespace.Labels); err != nil {
+		if err := s.repository.Rollback(ctx, err); err != nil {
+			return err
+		}
+		if errors.As(err, new(NotFoundError)) {
+			return errors.ErrNotFound.WithMsgf(err.Error())
 		}
 		return err
 	}

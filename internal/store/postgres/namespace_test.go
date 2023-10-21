@@ -2,6 +2,7 @@ package postgres_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -397,6 +398,45 @@ func (s *NamespaceRepositoryTestSuite) TestUpdate() {
 					s.T().Fatalf("got error %s, expected was %s", err.Error(), tc.ErrString)
 				}
 			}
+		})
+	}
+}
+
+func (s *NamespaceRepositoryTestSuite) TestUpdateLabels() {
+	type testCase struct {
+		Description    string
+		ID             uint64
+		Labels         map[string]string
+		ExpectedLabels map[string]string
+		Err            error
+	}
+
+	var testCases = []testCase{
+		{
+			Description: "should update existing namespace label",
+			ID:          1,
+			Labels: map[string]string{
+				"k": "v",
+			},
+			Err: nil,
+		},
+		{
+			Description: "should return error not found if id not found",
+			ID:          1000,
+			Labels:      map[string]string{},
+			Err:         errors.New("namespace with id 1000 not found"),
+		},
+		{
+			ID:          1,
+			Description: "should return nil if label is empty",
+			Err:         nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.Description, func() {
+			err := s.repository.UpdateLabels(s.ctx, tc.ID, tc.Labels)
+			s.Assert().Equal(tc.Err, err)
 		})
 	}
 }

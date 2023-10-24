@@ -161,20 +161,8 @@ func (s *Service) Update(ctx context.Context, ns *Namespace) error {
 	}
 
 	ctx = s.repository.WithTransaction(ctx)
-
-	existingNamespace, err := s.repository.Get(ctx, ns.ID)
-	if err != nil {
-		if err := s.repository.Rollback(ctx, err); err != nil {
-			return err
-		}
-		if errors.As(err, new(NotFoundError)) {
-			return errors.ErrNotFound.WithMsgf(err.Error())
-		}
-		return err
-	}
-
 	// merge existing labels
-	for k, v := range existingNamespace.Labels {
+	for k, v := range encryptedNS.Labels {
 		ns.Labels[k] = v
 	}
 

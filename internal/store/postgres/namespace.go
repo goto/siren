@@ -179,15 +179,13 @@ func (r NamespaceRepository) UpdateLabels(ctx context.Context, id uint64, labels
 		return nil
 	}
 	pgLabels := pgc.StringStringMap(labels)
-	rows, err := r.client.QueryxContext(ctx, pgc.OpUpdate, r.tableName, namespaceUpdateLabelQuery, id, pgLabels)
-	if err != nil {
-		err = pgc.CheckError(err)
+	var updatedNamespace model.Namespace
+	if err := r.client.QueryRowxContext(ctx, pgc.OpUpdate, r.tableName, namespaceUpdateLabelQuery, id, pgLabels).
+		StructScan(&updatedNamespace); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return namespace.NotFoundError{ID: id}
 		}
-		return err
 	}
-	defer rows.Close()
 	return nil
 }
 

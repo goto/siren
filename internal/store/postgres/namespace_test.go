@@ -2,7 +2,6 @@ package postgres_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -423,8 +422,10 @@ func (s *NamespaceRepositoryTestSuite) TestUpdateLabels() {
 		{
 			Description: "should return error not found if id not found",
 			ID:          1000,
-			Labels:      map[string]string{},
-			Err:         errors.New("namespace with id 1000 not found"),
+			Labels: map[string]string{
+				"k": "v",
+			},
+			Err: namespace.NotFoundError{ID: 1000},
 		},
 		{
 			ID:          1,

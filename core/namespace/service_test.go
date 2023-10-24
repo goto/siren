@@ -251,12 +251,10 @@ func TestService_CreateNamespace(t *testing.T) {
 				Setup: func(rr *mocks.NamespaceRepository, e *mocks.Encryptor, ps *mocks.ProviderService, cs *mocks.ConfigSyncer, tc testCase) {
 					ps.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64")).Return(&provider.Provider{Type: testProviderType}, nil)
 					e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return("some-ciphertext", nil)
-					rr.EXPECT().WithTransaction(mock.AnythingOfType("context.todoCtx")).Return(ctx)
 					rr.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), &namespace.EncryptedNamespace{
 						Namespace:        tc.NSpace,
 						CredentialString: "some-ciphertext",
 					}).Return(errors.New("some error"))
-					rr.EXPECT().Rollback(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("*errors.errorString")).Return(nil)
 				},
 				NSpace: &namespace.Namespace{
 					Credentials: map[string]any{
@@ -270,12 +268,10 @@ func TestService_CreateNamespace(t *testing.T) {
 				Setup: func(rr *mocks.NamespaceRepository, e *mocks.Encryptor, ps *mocks.ProviderService, cs *mocks.ConfigSyncer, tc testCase) {
 					ps.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64")).Return(&provider.Provider{Type: testProviderType}, nil)
 					e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return("some-ciphertext", nil)
-					rr.EXPECT().WithTransaction(mock.AnythingOfType("context.todoCtx")).Return(ctx)
 					rr.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), &namespace.EncryptedNamespace{
 						Namespace:        tc.NSpace,
 						CredentialString: "some-ciphertext",
 					}).Return(namespace.ErrDuplicate)
-					rr.EXPECT().Rollback(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("*errors.errorString")).Return(nil)
 				},
 				NSpace: &namespace.Namespace{
 					Credentials: map[string]any{
@@ -289,12 +285,10 @@ func TestService_CreateNamespace(t *testing.T) {
 				Setup: func(rr *mocks.NamespaceRepository, e *mocks.Encryptor, ps *mocks.ProviderService, cs *mocks.ConfigSyncer, tc testCase) {
 					ps.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64")).Return(&provider.Provider{Type: testProviderType}, nil)
 					e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return("some-ciphertext", nil)
-					rr.EXPECT().WithTransaction(mock.AnythingOfType("context.todoCtx")).Return(ctx)
 					rr.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), &namespace.EncryptedNamespace{
 						Namespace:        tc.NSpace,
 						CredentialString: "some-ciphertext",
 					}).Return(namespace.ErrRelation)
-					rr.EXPECT().Rollback(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("*errors.errorString")).Return(nil)
 				},
 				NSpace: &namespace.Namespace{
 					Credentials: map[string]any{
@@ -308,13 +302,11 @@ func TestService_CreateNamespace(t *testing.T) {
 				Setup: func(rr *mocks.NamespaceRepository, e *mocks.Encryptor, ps *mocks.ProviderService, cs *mocks.ConfigSyncer, tc testCase) {
 					ps.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64")).Return(&provider.Provider{Type: testProviderType}, nil)
 					e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return("some-ciphertext", nil)
-					rr.EXPECT().WithTransaction(mock.AnythingOfType("context.todoCtx")).Return(ctx)
 					rr.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), &namespace.EncryptedNamespace{
 						Namespace:        tc.NSpace,
 						CredentialString: "some-ciphertext",
 					}).Return(nil)
 					cs.EXPECT().SyncRuntimeConfig(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string"), mock.AnythingOfType("provider.Provider")).Return(nil, errors.New("some error"))
-					rr.EXPECT().Rollback(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("*errors.errorString")).Return(nil)
 				},
 				NSpace: &namespace.Namespace{
 					Credentials: map[string]any{
@@ -328,14 +320,12 @@ func TestService_CreateNamespace(t *testing.T) {
 				Setup: func(rr *mocks.NamespaceRepository, e *mocks.Encryptor, ps *mocks.ProviderService, cs *mocks.ConfigSyncer, tc testCase) {
 					ps.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64")).Return(&provider.Provider{Type: testProviderType}, nil)
 					e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return("some-ciphertext", nil)
-					rr.EXPECT().WithTransaction(mock.AnythingOfType("context.todoCtx")).Return(ctx)
 					rr.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), &namespace.EncryptedNamespace{
 						Namespace:        tc.NSpace,
 						CredentialString: "some-ciphertext",
 					}).Return(nil)
 					cs.EXPECT().SyncRuntimeConfig(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string"), mock.AnythingOfType("provider.Provider")).Return(map[string]string{"k": "v"}, nil)
 					rr.EXPECT().UpdateLabels(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64"), mock.AnythingOfType("map[string]string")).Return(errors.New("some error"))
-					rr.EXPECT().Rollback(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("*errors.errorString")).Return(nil)
 				},
 				NSpace: &namespace.Namespace{
 					Credentials: map[string]any{
@@ -349,14 +339,12 @@ func TestService_CreateNamespace(t *testing.T) {
 				Setup: func(rr *mocks.NamespaceRepository, e *mocks.Encryptor, ps *mocks.ProviderService, cs *mocks.ConfigSyncer, tc testCase) {
 					ps.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64")).Return(&provider.Provider{Type: testProviderType}, nil)
 					e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return("some-ciphertext", nil)
-					rr.EXPECT().WithTransaction(mock.AnythingOfType("context.todoCtx")).Return(ctx)
 					rr.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), &namespace.EncryptedNamespace{
 						Namespace:        tc.NSpace,
 						CredentialString: "some-ciphertext",
 					}).Return(nil)
 					cs.EXPECT().SyncRuntimeConfig(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64"), mock.AnythingOfType("string"), mock.AnythingOfType("map[string]string"), mock.AnythingOfType("provider.Provider")).Return(map[string]string{"k": "v"}, nil)
 					rr.EXPECT().UpdateLabels(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("uint64"), mock.AnythingOfType("map[string]string")).Return(nil)
-					rr.EXPECT().Commit(mock.AnythingOfType("context.todoCtx")).Return(nil)
 				},
 				NSpace: &namespace.Namespace{
 					Credentials: map[string]any{

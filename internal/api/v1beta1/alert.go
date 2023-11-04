@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/goto/siren/core/alert"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -57,6 +58,7 @@ func (s *GRPCServer) CreateAlertsWithNamespace(ctx context.Context, req *sirenv1
 	if !s.useGlobalSubscription {
 		namespaceID = req.GetNamespaceId()
 	}
+	s.logger.Debug("incoming create alert with namespace", proto.MarshalTextString(req))
 	items, err := s.createAlerts(ctx, req.GetProviderType(), req.GetProviderId(), namespaceID, req.GetBody().AsMap())
 	if err != nil {
 		return nil, s.generateRPCErr(err)

@@ -70,7 +70,7 @@ func (r *SubscriptionRepository) List(ctx context.Context, flt subscription.Filt
 	if len(flt.Metadata) != 0 {
 		metadataJSON, err := json.Marshal(flt.Metadata)
 		if err != nil {
-			return nil, errors.ErrInvalid.WithCausef("problem marshalling subscription metadata json to string with err: %s", err.Error())
+			return nil, errors.ErrInvalid.WithMsgf("problem marshalling subscription metadata json to string with err: %s", err.Error())
 		}
 		queryBuilder = queryBuilder.Where(fmt.Sprintf("metadata @> '%s'::jsonb", string(json.RawMessage(metadataJSON))))
 	}
@@ -79,7 +79,7 @@ func (r *SubscriptionRepository) List(ctx context.Context, flt subscription.Filt
 	if len(flt.Match) != 0 {
 		labelsJSON, err := json.Marshal(flt.Match)
 		if err != nil {
-			return nil, errors.ErrInvalid.WithCausef("problem marshalling match json to string with err: %s", err.Error())
+			return nil, errors.ErrInvalid.WithMsgf("problem marshalling match json to string with err: %s", err.Error())
 		}
 		queryBuilder = queryBuilder.Where(fmt.Sprintf("match @> '%s'::jsonb", string(json.RawMessage(labelsJSON))))
 	}
@@ -88,7 +88,7 @@ func (r *SubscriptionRepository) List(ctx context.Context, flt subscription.Filt
 	if len(flt.NotificationMatch) != 0 {
 		labelsJSON, err := json.Marshal(flt.NotificationMatch)
 		if err != nil {
-			return nil, errors.ErrInvalid.WithCausef("problem marshalling notification labels json to string with err: %s", err.Error())
+			return nil, errors.ErrInvalid.WithMsgf("problem marshalling notification labels json to string with err: %s", err.Error())
 		}
 		queryBuilder = queryBuilder.Where(fmt.Sprintf("match <@ '%s'::jsonb", string(json.RawMessage(labelsJSON))))
 	}

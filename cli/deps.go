@@ -90,13 +90,6 @@ func InitDeps(
 		}
 	}
 
-	alertRepository := postgres.NewAlertRepository(pgClient)
-	alertService := alert.NewService(
-		alertRepository,
-		logService,
-		alertTransformers,
-	)
-
 	namespaceRepository := postgres.NewNamespaceRepository(pgClient)
 	namespaceService := namespace.NewService(encryptor, namespaceRepository, providerService, configSyncers)
 
@@ -154,6 +147,7 @@ func InitDeps(
 	idempotencyRepository := postgres.NewIdempotencyRepository(pgClient)
 	notificationRepository := postgres.NewNotificationRepository(pgClient)
 
+	alertRepository := postgres.NewAlertRepository(pgClient)
 	notificationService := notification.NewService(
 		logger,
 		cfg.Notification,
@@ -163,13 +157,22 @@ func InitDeps(
 		notification.Deps{
 			LogService:            logService,
 			IdempotencyRepository: idempotencyRepository,
+			AlertRepository:       alertRepository,
 			ReceiverService:       receiverService,
 			SubscriptionService:   subscriptionService,
 			SilenceService:        silenceService,
-			AlertService:          alertService,
 			TemplateService:       templateService,
 		},
 		cfg.Service.EnableSilenceFeature,
+	)
+
+	alertService := alert.NewService(
+		cfg.Alert,
+		logger,
+		alertRepository,
+		logService,
+		notificationService,
+		alertTransformers,
 	)
 
 	return &api.Deps{

@@ -48,6 +48,9 @@ packages:
       LogService:
         config:
           filename: "log_service.go"
+      NotificationService:
+        config:
+          filename: "notification_service.go"
   github.com/goto/siren/core/log:
     config:
       dir: "core/log/mocks"
@@ -108,9 +111,9 @@ packages:
       SilenceService:
         config:
           filename: "silence_service.go"
-      AlertService:
+      AlertRepository:
         config:
-          filename: "alert_service.go"
+          filename: "alert_repository.go"
       LogService:
         config:
           filename: "log_service.go"

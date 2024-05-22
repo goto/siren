@@ -7,7 +7,6 @@ import (
 
 	saltlog "github.com/goto/salt/log"
 
-	"github.com/goto/siren/core/alert"
 	"github.com/goto/siren/core/log"
 	"github.com/goto/siren/core/receiver"
 	"github.com/goto/siren/core/silence"
@@ -34,8 +33,8 @@ type SilenceService interface {
 	List(ctx context.Context, filter silence.Filter) ([]silence.Silence, error)
 }
 
-type AlertService interface {
-	UpdateSilenceStatus(ctx context.Context, alertIDs []int64, hasSilenced bool, hasNonSilenced bool) error
+type AlertRepository interface {
+	BulkUpdateSilence(context.Context, []int64, string) error
 }
 
 type LogService interface {
@@ -52,12 +51,12 @@ type Service struct {
 	cfg                   Config
 	q                     Queuer
 	idempotencyRepository IdempotencyRepository
+	alertRepository       AlertRepository
 	logService            LogService
 	repository            Repository
 	receiverService       ReceiverService
 	subscriptionService   SubscriptionService
 	silenceService        SilenceService
-	alertService          AlertService
 	notifierPlugins       map[string]Notifier
 	dispatcher            map[string]Dispatcher
 	enableSilenceFeature  bool
@@ -65,12 +64,12 @@ type Service struct {
 
 type Deps struct {
 	IdempotencyRepository     IdempotencyRepository
+	AlertRepository           AlertRepository
 	LogService                LogService
 	ReceiverService           ReceiverService
 	TemplateService           TemplateService
 	SubscriptionService       SubscriptionService
 	SilenceService            SilenceService
-	AlertService              AlertService
 	DispatchReceiverService   Dispatcher
 	DispatchSubscriberService Dispatcher
 }
@@ -105,11 +104,11 @@ func NewService(
 		q:                     q,
 		repository:            repository,
 		idempotencyRepository: deps.IdempotencyRepository,
+		alertRepository:       deps.AlertRepository,
 		logService:            deps.LogService,
 		receiverService:       deps.ReceiverService,
 		subscriptionService:   deps.SubscriptionService,
 		silenceService:        deps.SilenceService,
-		alertService:          deps.AlertService,
 		dispatcher: map[string]Dispatcher{
 			FlowReceiver:   dispatchReceiverService,
 			FlowSubscriber: dispatchSubscriberService,
@@ -207,7 +206,7 @@ func (s *Service) dispatchByFlow(ctx context.Context, n Notification, flow strin
 
 	// Reliability of silence feature need to be tested more
 	if s.enableSilenceFeature {
-		if err := s.alertService.UpdateSilenceStatus(ctx, n.AlertIDs, hasSilenced, len(messages) != 0); err != nil {
+		if err := s.alertRepository.BulkUpdateSilence(ctx, n.AlertIDs, silence.Status(hasSilenced, len(messages) != 0)); err != nil {
 			return fmt.Errorf("failed updating silence status: %w", err)
 		}
 	}
@@ -301,94 +300,6 @@ func (s *Service) discardSecrets(messages []Message) []Message {
 	}
 
 	return newMessages
-}
-
-// Transform alerts and populate Data and Labels to be interpolated to the system-default template
-// .Data
-// - id
-// - status "FIRING"/"RESOLVED"
-// - resource
-// - template
-// - metric_value
-// - metric_name
-// - generator_url
-// - num_alerts_firing
-// - dashboard
-// - playbook
-// - summary
-// .Labels
-// - severity "WARNING"/"CRITICAL"
-// - alertname
-// - (others labels defined in rules)
-func (s *Service) BuildFromAlerts(
-	alerts []alert.Alert,
-	firingLen int,
-	createdTime time.Time,
-) ([]Notification, error) {
-	if len(alerts) == 0 {
-		return nil, errors.New("empty alerts")
-	}
-
-	alertsMap, err := groupByLabels(alerts, s.cfg.GroupBy)
-	if err != nil {
-		return nil, err
-	}
-
-	var notifications []Notification
-
-	for hashKey, groupedAlerts := range alertsMap {
-		sampleAlert := groupedAlerts[0]
-
-		data := map[string]any{}
-
-		mergedAnnotations := map[string][]string{}
-		for _, a := range groupedAlerts {
-			for k, v := range a.Annotations {
-				mergedAnnotations[k] = append(mergedAnnotations[k], v)
-			}
-		}
-		// make unique
-		for k, v := range mergedAnnotations {
-			mergedAnnotations[k] = removeDuplicateStringValues(v)
-		}
-		// render annotations
-		for k, vSlice := range mergedAnnotations {
-			for _, v := range vSlice {
-				if _, ok := data[k]; ok {
-					data[k] = fmt.Sprintf("%s\n%s", data[k], v)
-				} else {
-					data[k] = v
-				}
-			}
-		}
-
-		data["status"] = sampleAlert.Status
-		data["generator_url"] = sampleAlert.GeneratorURL
-		data["num_alerts_firing"] = firingLen
-
-		alertIDs := []int64{}
-
-		for _, a := range groupedAlerts {
-			alertIDs = append(alertIDs, int64(a.ID))
-		}
-
-		for k, v := range sampleAlert.Labels {
-			data[k] = v
-		}
-
-		notifications = append(notifications, Notification{
-			NamespaceID: sampleAlert.NamespaceID,
-			Type:        TypeAlert,
-			Data:        data,
-			Labels:      sampleAlert.Labels,
-			Template:    template.ReservedName_SystemDefault,
-			UniqueKey:   hashGroupKey(sampleAlert.GroupKey, hashKey),
-			CreatedAt:   createdTime,
-			AlertIDs:    alertIDs,
-		})
-	}
-
-	return notifications, nil
 }
 
 func (s *Service) List(ctx context.Context, flt Filter) ([]Notification, error) {

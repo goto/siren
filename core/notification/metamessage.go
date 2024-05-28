@@ -1,22 +1,19 @@
 package notification
 
-import "github.com/goto/siren/core/subscription"
+import (
+	"time"
+)
 
 type MetaMessage struct {
-	ReceiverID      uint64
-	SubscriptionIDs []uint64
-	ReceiverType    string
-	Notification    Notification
-	ReceiverConfigs map[string]any
-	MergedLabels    map[string][]string
-}
-
-func buildMetaMessage(n Notification, rcvView subscription.ReceiverView) MetaMessage {
-	return MetaMessage{
-		ReceiverID:      rcvView.ID,
-		SubscriptionIDs: []uint64{rcvView.SubscriptionID},
-		ReceiverType:    rcvView.Type,
-		Notification:    n,
-		ReceiverConfigs: rcvView.Configurations,
-	}
+	ReceiverID       uint64
+	SubscriptionIDs  []uint64
+	ReceiverType     string
+	NotificationIDs  []string
+	NotificationType string
+	ReceiverConfigs  map[string]any
+	Data             map[string]any
+	ValidDuration    time.Duration
+	Template         string
+	Labels           map[string]string
+	MergedLabels     map[string][]string
 }

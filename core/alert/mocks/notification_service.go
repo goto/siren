@@ -22,27 +22,29 @@ func (_m *NotificationService) EXPECT() *NotificationService_Expecter {
 	return &NotificationService_Expecter{mock: &_m.Mock}
 }
 
-// Dispatch provides a mock function with given fields: ctx, n
-func (_m *NotificationService) Dispatch(ctx context.Context, n notification.Notification) (string, error) {
-	ret := _m.Called(ctx, n)
+// Dispatch provides a mock function with given fields: _a0, _a1, _a2
+func (_m *NotificationService) Dispatch(_a0 context.Context, _a1 []notification.Notification, _a2 string) ([]string, error) {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Dispatch")
 	}
 
-	var r0 string
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, notification.Notification) (string, error)); ok {
-		return rf(ctx, n)
+	if rf, ok := ret.Get(0).(func(context.Context, []notification.Notification, string) ([]string, error)); ok {
+		return rf(_a0, _a1, _a2)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, notification.Notification) string); ok {
-		r0 = rf(ctx, n)
+	if rf, ok := ret.Get(0).(func(context.Context, []notification.Notification, string) []string); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, notification.Notification) error); ok {
-		r1 = rf(ctx, n)
+	if rf, ok := ret.Get(1).(func(context.Context, []notification.Notification, string) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,25 +58,26 @@ type NotificationService_Dispatch_Call struct {
 }
 
 // Dispatch is a helper method to define mock.On call
-//   - ctx context.Context
-//   - n notification.Notification
-func (_e *NotificationService_Expecter) Dispatch(ctx interface{}, n interface{}) *NotificationService_Dispatch_Call {
-	return &NotificationService_Dispatch_Call{Call: _e.mock.On("Dispatch", ctx, n)}
+//   - _a0 context.Context
+//   - _a1 []notification.Notification
+//   - _a2 string
+func (_e *NotificationService_Expecter) Dispatch(_a0 interface{}, _a1 interface{}, _a2 interface{}) *NotificationService_Dispatch_Call {
+	return &NotificationService_Dispatch_Call{Call: _e.mock.On("Dispatch", _a0, _a1, _a2)}
 }
 
-func (_c *NotificationService_Dispatch_Call) Run(run func(ctx context.Context, n notification.Notification)) *NotificationService_Dispatch_Call {
+func (_c *NotificationService_Dispatch_Call) Run(run func(_a0 context.Context, _a1 []notification.Notification, _a2 string)) *NotificationService_Dispatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(notification.Notification))
+		run(args[0].(context.Context), args[1].([]notification.Notification), args[2].(string))
 	})
 	return _c
 }
 
-func (_c *NotificationService_Dispatch_Call) Return(_a0 string, _a1 error) *NotificationService_Dispatch_Call {
+func (_c *NotificationService_Dispatch_Call) Return(_a0 []string, _a1 error) *NotificationService_Dispatch_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *NotificationService_Dispatch_Call) RunAndReturn(run func(context.Context, notification.Notification) (string, error)) *NotificationService_Dispatch_Call {
+func (_c *NotificationService_Dispatch_Call) RunAndReturn(run func(context.Context, []notification.Notification, string) ([]string, error)) *NotificationService_Dispatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

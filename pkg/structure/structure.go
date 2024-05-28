@@ -25,7 +25,7 @@ func GroupByLabels[S any](collection []S, groupBy []string, getLabels func(S) ma
 
 	for _, c := range collection {
 		var labels = getLabels(c)
-		var groupLabels = buildGroupLabels(labels, groupBy)
+		var groupLabels = BuildGroupLabels(labels, groupBy)
 		if len(groupLabels) == 0 {
 			groupLabels = labels
 		}
@@ -39,7 +39,7 @@ func GroupByLabels[S any](collection []S, groupBy []string, getLabels func(S) ma
 	return collectionMap, nil
 }
 
-func buildGroupLabels(labels map[string]string, groupBy []string) map[string]string {
+func BuildGroupLabels(labels map[string]string, groupBy []string) map[string]string {
 	var groupLabels = map[string]string{}
 
 	for _, g := range groupBy {

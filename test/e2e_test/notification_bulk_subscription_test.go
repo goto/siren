@@ -12,20 +12,22 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/goto/salt/db"
 	"github.com/goto/siren/config"
 	"github.com/goto/siren/core/notification"
+	"github.com/goto/siren/core/template"
 	"github.com/goto/siren/internal/server"
 	"github.com/goto/siren/plugins"
 	cortexv1plugin "github.com/goto/siren/plugins/providers/cortex/v1"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
+	testdatatemplate_test "github.com/goto/siren/test/e2e_test/testdata/templates"
 	"github.com/mcuadros/go-defaults"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v3"
 )
 
-type NotificationSubscriptionTestSuite struct {
+type BulkNotificationSubscriptionTestSuite struct {
 	suite.Suite
 	cancelContext context.CancelFunc
 	grpcClient    sirenv1beta1.SirenServiceClient
@@ -35,7 +37,7 @@ type NotificationSubscriptionTestSuite struct {
 	testBench     *CortexTest
 }
 
-func (s *NotificationSubscriptionTestSuite) SetupTest() {
+func (s *BulkNotificationSubscriptionTestSuite) SetupTest() {
 	apiHTTPPort, err := getFreePort()
 	s.Require().Nil(err)
 	apiGRPCPort, err := getFreePort()
@@ -61,6 +63,11 @@ func (s *NotificationSubscriptionTestSuite) SetupTest() {
 		DLQHandler: notification.HandlerConfig{
 			Enabled: false,
 		},
+		GroupBy: []string{
+			"team",
+			"service",
+		},
+		SubscriptionV2Enabled: true,
 	}
 	s.appConfig.Telemetry.OpenTelemetry.Enabled = false
 
@@ -113,7 +120,7 @@ func (s *NotificationSubscriptionTestSuite) SetupTest() {
 	}
 }
 
-func (s *NotificationSubscriptionTestSuite) TearDownTest() {
+func (s *BulkNotificationSubscriptionTestSuite) TearDownTest() {
 	s.cancelClient()
 
 	// Clean tests
@@ -123,7 +130,7 @@ func (s *NotificationSubscriptionTestSuite) TearDownTest() {
 	s.cancelContext()
 }
 
-func (s *NotificationSubscriptionTestSuite) TestSendNotification() {
+func (s *BulkNotificationSubscriptionTestSuite) TestSendBulkNotification() {
 	ctx := context.Background()
 
 	_, err := s.grpcClient.CreateNamespace(ctx, &sirenv1beta1.CreateNamespaceRequest{
@@ -137,38 +144,45 @@ func (s *NotificationSubscriptionTestSuite) TestSendNotification() {
 	})
 	s.Require().NoError(err)
 
-	s.Run("sending notification with matching subscription labels should trigger notification", func() {
+	s.Run("sending bulk notification with same group labels should trigger only 1 notification", func() {
 		waitChan := make(chan struct{}, 1)
 
 		testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			body, err := io.ReadAll(r.Body)
+			bodyBytes, err := io.ReadAll(r.Body)
 			s.Assert().NoError(err)
-
+			fmt.Println(string(bodyBytes))
 			type sampleStruct struct {
-				ID               string `json:"id"`
-				Key1             string `json:"key1"`
-				Key2             string `json:"key2"`
-				Key3             string `json:"key3"`
-				NotificationType string `json:"notification_type"`
-				ReceiverID       string `json:"receiver_id"`
+				Title             string `json:"title"`
+				Desription        string `json:"description"`
+				MergedTeam        string `json:"merged_team"`
+				MergedService     string `json:"merged_service"`
+				MergedEnvironment string `json:"merged_environment"`
+				MergedCategory    string `json:"merged_category"`
 			}
 
-			expectedBody := `{"key1":"value1","key2":"value2","key3":"value3","notification_type":"event"}`
+			expectedNotification := sampleStruct{
+				Title: "This is the test notification with template",
+				Desription: `Plain flow scalars are picky about the (:) and (#) characters. 
+They can be in the string, but (:) cannot appear before a space or newline.
+And (#) cannot appear after a space or newline; doing this will cause a syntax error. 
+If you need to use these characters you are probably better off using one of the quoted styles instead.
+`,
+				MergedCategory:    "httpreceiver",
+				MergedEnvironment: "integration development production",
+				MergedService:     "some-service some-service some-service",
+				MergedTeam:        "gotocompany gotocompany gotocompany",
+			}
 			var (
-				expectedStruct sampleStruct
-				resultStruct   sampleStruct
+				resultStruct sampleStruct
 			)
+			s.Assert().NoError(json.Unmarshal(bodyBytes, &resultStruct))
 
-			s.Require().NoError(json.Unmarshal([]byte(expectedBody), &expectedStruct))
-			s.Require().NoError(json.Unmarshal([]byte(body), &resultStruct))
-
-			if diff := cmp.Diff(expectedStruct, resultStruct, cmpopts.IgnoreFields(sampleStruct{}, "ID")); diff != "" {
+			if diff := cmp.Diff(expectedNotification, resultStruct); diff != "" {
 				s.T().Errorf("got diff: %v", diff)
 			}
+			waitChan <- struct{}{}
 
-			close(waitChan)
 		}))
-		s.Require().Nil(err)
 		defer testServer.Close()
 
 		configs, err := structpb.NewStruct(map[string]any{
@@ -187,6 +201,30 @@ func (s *NotificationSubscriptionTestSuite) TestSendNotification() {
 		})
 		s.Require().NoError(err)
 
+		sampleTemplateFile, err := template.YamlStringToFile(testdatatemplate_test.SampleBulkMessageTemplate)
+		s.Require().NoError(err)
+
+		body, err := yaml.Marshal(sampleTemplateFile.Body)
+		s.Require().NoError(err)
+
+		variables := make([]*sirenv1beta1.TemplateVariables, 0)
+		for _, variable := range sampleTemplateFile.Variables {
+			variables = append(variables, &sirenv1beta1.TemplateVariables{
+				Name:        variable.Name,
+				Type:        variable.Type,
+				Default:     variable.Default,
+				Description: variable.Description,
+			})
+		}
+
+		_, err = s.grpcClient.UpsertTemplate(ctx, &sirenv1beta1.UpsertTemplateRequest{
+			Name:      sampleTemplateFile.Name,
+			Body:      string(body),
+			Tags:      sampleTemplateFile.Tags,
+			Variables: variables,
+		})
+		s.Require().NoError(err)
+
 		_, err = s.grpcClient.CreateSubscription(ctx, &sirenv1beta1.CreateSubscriptionRequest{
 			Urn:       "subscribe-http-three",
 			Namespace: 1,
@@ -196,36 +234,50 @@ func (s *NotificationSubscriptionTestSuite) TestSendNotification() {
 				},
 			},
 			Match: map[string]string{
-				"team":        "gotocompany",
-				"service":     "some-service",
-				"environment": "integration",
+				"team":    "gotocompany",
+				"service": "some-service",
 			},
 		})
 		s.Require().NoError(err)
 
 		data, err := structpb.NewStruct(map[string]any{
-			"key1": "value1",
-			"key2": "value2",
-			"key3": "value3",
+			"title":      "This is the test notification with template",
+			"icon_emoji": ":smile:",
 		})
 		s.Require().NoError(err)
 
-		// var receiverSelectors []*structpb.Struct
+		// time.Sleep(100 * time.Millisecond)
 
-		// receiverSelector, err := structpb.NewStruct(map[string]any{
-		// 	"id": "1",
-		// })
-		// s.Require().NoError(err)
-
-		// receiverSelectors = append(receiverSelectors, receiverSelector)
-
-		_, err = s.grpcClient.PostNotification(ctx, &sirenv1beta1.PostNotificationRequest{
-			// Receivers: receiverSelectors,
-			Data: data,
-			Labels: map[string]string{
-				"team":        "gotocompany",
-				"service":     "some-service",
-				"environment": "integration",
+		_, err = s.grpcClient.PostBulkNotifications(ctx, &sirenv1beta1.PostBulkNotificationsRequest{
+			Notifications: []*sirenv1beta1.Notification{
+				{
+					Data: data,
+					Labels: map[string]string{
+						"team":        "gotocompany",
+						"service":     "some-service",
+						"environment": "integration",
+						"category":    "httpreceiver",
+					},
+					Template: sampleTemplateFile.Name,
+				},
+				{
+					Data: data,
+					Labels: map[string]string{
+						"team":        "gotocompany",
+						"service":     "some-service",
+						"environment": "development",
+					},
+					Template: sampleTemplateFile.Name,
+				},
+				{
+					Data: data,
+					Labels: map[string]string{
+						"team":        "gotocompany",
+						"service":     "some-service",
+						"environment": "production",
+					},
+					Template: sampleTemplateFile.Name,
+				},
 			},
 		})
 		s.Assert().NoError(err)
@@ -234,6 +286,6 @@ func (s *NotificationSubscriptionTestSuite) TestSendNotification() {
 	})
 }
 
-func TestNotificationSubscriptionTestSuite(t *testing.T) {
-	suite.Run(t, new(NotificationSubscriptionTestSuite))
+func TestBulkNotificationSubscriptionTestSuite(t *testing.T) {
+	suite.Run(t, new(BulkNotificationSubscriptionTestSuite))
 }

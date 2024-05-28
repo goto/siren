@@ -36,6 +36,7 @@ func TestMessage_InitMessage(t *testing.T) {
 				n.EXPECT().GetSystemDefaultTemplate().Return("")
 			},
 			n: notification.Notification{
+				ID:   "aa",
 				Type: notification.RouterSubscriber,
 				Labels: map[string]string{
 					"labelkey1": "value1",
@@ -48,8 +49,9 @@ func TestMessage_InitMessage(t *testing.T) {
 				Template: template.ReservedName_SystemDefault,
 			},
 			want: notification.Message{
-				ID:     testID,
-				Status: notification.MessageStatusEnqueued,
+				ID:              testID,
+				NotificationIDs: []string{"aa"},
+				Status:          notification.MessageStatusEnqueued,
 				Details: map[string]any{
 					"labelkey1":                             "value1",
 					"varkey1":                               "value1",

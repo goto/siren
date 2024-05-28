@@ -6,16 +6,9 @@ import (
 )
 
 type Repository interface {
-	Transactor
 	Create(context.Context, Alert) (Alert, error)
 	List(context.Context, Filter) ([]Alert, error)
 	BulkUpdateSilence(context.Context, []int64, string) error
-}
-
-type Transactor interface {
-	WithTransaction(ctx context.Context) context.Context
-	Rollback(ctx context.Context, err error) error
-	Commit(ctx context.Context) error
 }
 
 type Alert struct {

@@ -35,16 +35,7 @@ func NewService(cfg Config, logger saltlog.Logger, repository Repository, logSer
 	return &Service{cfg, logger, repository, logService, notificationService, registry}
 }
 
-func (s *Service) rollback(ctx context.Context, err error) error {
-	if rbErr := s.repository.Rollback(ctx, err); rbErr != nil {
-		return rbErr
-	} else {
-		return err
-	}
-}
-
 func (s *Service) CreateAlerts(ctx context.Context, providerType string, providerID uint64, namespaceID uint64, body map[string]any) ([]Alert, error) {
-	ctx = s.repository.WithTransaction(ctx)
 	pluginService, err := s.getProviderPluginService(providerType)
 	if err != nil {
 		return nil, err
@@ -57,14 +48,10 @@ func (s *Service) CreateAlerts(ctx context.Context, providerType string, provide
 	for i := 0; i < len(alerts); i++ {
 		createdAlert, err := s.repository.Create(ctx, alerts[i])
 		if err != nil {
-			repoErr := err
 			if errors.Is(err, ErrRelation) {
-				repoErr = errors.ErrNotFound.WithMsgf(err.Error())
+				return nil, errors.ErrNotFound.WithMsgf(err.Error())
 			}
-			if rbErr := s.rollback(ctx, repoErr); rbErr != nil {
-				return nil, rbErr
-			}
-			return nil, repoErr
+			return nil, err
 		}
 		alerts[i].ID = createdAlert.ID
 	}
@@ -73,9 +60,6 @@ func (s *Service) CreateAlerts(ctx context.Context, providerType string, provide
 		// Publish to notification service
 		ns, err := BuildNotifications(alerts, firingLen, time.Now(), s.cfg.GroupBy)
 		if err != nil {
-			if rbErr := s.rollback(ctx, err); rbErr != nil {
-				return nil, rbErr
-			}
 			s.logger.Warn("failed to build notifications from alert", "err", err, "alerts", alerts)
 		}
 
@@ -88,10 +72,6 @@ func (s *Service) CreateAlerts(ctx context.Context, providerType string, provide
 
 	} else {
 		s.logger.Warn("failed to send alert as notification, empty created alerts")
-	}
-
-	if err := s.repository.Commit(ctx); err != nil {
-		return nil, err
 	}
 
 	return alerts, nil

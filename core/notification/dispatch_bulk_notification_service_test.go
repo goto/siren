@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	saltlog "github.com/goto/salt/log"
 	"github.com/goto/siren/core/log"
 	"github.com/goto/siren/core/notification"
@@ -173,6 +174,7 @@ func TestReduceMetaMessages(t *testing.T) {
 			metaMessages: []notification.MetaMessage{
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"xx"},
 					SubscriptionIDs: []uint64{1, 2},
 					Data: map[string]any{
 						"d1": "dv1",
@@ -184,6 +186,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"yy"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d2": "dv2",
@@ -196,6 +199,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      14,
+					NotificationIDs: []string{"zz"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -209,6 +213,7 @@ func TestReduceMetaMessages(t *testing.T) {
 			want: []notification.MetaMessage{
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"xx", "yy"},
 					SubscriptionIDs: []uint64{1, 2, 3, 4},
 					Data: map[string]any{
 						"d1": "dv1",
@@ -225,6 +230,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      14,
+					NotificationIDs: []string{"zz"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -245,6 +251,7 @@ func TestReduceMetaMessages(t *testing.T) {
 			metaMessages: []notification.MetaMessage{
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"xx"},
 					SubscriptionIDs: []uint64{1, 2},
 					Data: map[string]any{
 						"d1": "dv1",
@@ -257,6 +264,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"yy"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d2": "dv2",
@@ -270,6 +278,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      14,
+					NotificationIDs: []string{"zz"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -284,6 +293,7 @@ func TestReduceMetaMessages(t *testing.T) {
 			want: []notification.MetaMessage{
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"xx"},
 					SubscriptionIDs: []uint64{1, 2},
 					Data: map[string]any{
 						"d1": "dv1",
@@ -297,6 +307,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"yy"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d2": "dv2",
@@ -311,6 +322,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      14,
+					NotificationIDs: []string{"zz"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -333,6 +345,7 @@ func TestReduceMetaMessages(t *testing.T) {
 			metaMessages: []notification.MetaMessage{
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"xx"},
 					SubscriptionIDs: []uint64{1, 2},
 					Data: map[string]any{
 						"d1": "dv1",
@@ -344,6 +357,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"yy"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d2": "dv2",
@@ -356,6 +370,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"zz"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -367,6 +382,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"aa"},
 					SubscriptionIDs: []uint64{5, 6},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -380,6 +396,7 @@ func TestReduceMetaMessages(t *testing.T) {
 			want: []notification.MetaMessage{
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"xx", "aa"},
 					SubscriptionIDs: []uint64{1, 2, 5, 6},
 					Data: map[string]any{
 						"d1": "dv1",
@@ -392,6 +409,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"yy"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d2": "dv2",
@@ -405,6 +423,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				},
 				{
 					ReceiverID:      13,
+					NotificationIDs: []string{"zz"},
 					SubscriptionIDs: []uint64{3, 4},
 					Data: map[string]any{
 						"d3": "dv3",
@@ -425,7 +444,7 @@ func TestReduceMetaMessages(t *testing.T) {
 				t.Errorf("ReduceMetaMessages() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if diff := cmp.Diff(got, tt.want); diff != "" {
+			if diff := cmp.Diff(got, tt.want, cmpopts.SortSlices(func(i, j notification.MetaMessage) bool { return i.ReceiverID < j.ReceiverID })); diff != "" {
 				t.Errorf("ReduceMetaMessages() diff = %v", diff)
 			}
 		})

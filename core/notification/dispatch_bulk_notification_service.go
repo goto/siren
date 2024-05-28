@@ -180,6 +180,7 @@ func MergeMetaMessage(from MetaMessage, to MetaMessage) MetaMessage {
 	for k, v := range from.Labels {
 		output.MergedLabels[k] = append(output.MergedLabels[k], v)
 	}
+	output.NotificationIDs = append(output.NotificationIDs, from.NotificationIDs...)
 	output.SubscriptionIDs = append(output.SubscriptionIDs, from.SubscriptionIDs...)
 	return output
 }

@@ -246,8 +246,6 @@ If you need to use these characters you are probably better off using one of the
 		})
 		s.Require().NoError(err)
 
-		// time.Sleep(100 * time.Millisecond)
-
 		_, err = s.grpcClient.PostBulkNotifications(ctx, &sirenv1beta1.PostBulkNotificationsRequest{
 			Notifications: []*sirenv1beta1.Notification{
 				{

@@ -262,6 +262,7 @@ func TestRouterSubscriberService_PrepareMessage(t *testing.T) {
 		{
 			name: "should return no error if all flow passed and no silences",
 			n: notification.Notification{
+				ID:          "aa",
 				NamespaceID: 1,
 				Type:        receiver.TypeHTTP,
 				Template:    template.ReservedName_SystemDefault,
@@ -297,14 +298,15 @@ func TestRouterSubscriberService_PrepareMessage(t *testing.T) {
 			},
 			want: []notification.Message{
 				{
-					Status:       notification.MessageStatusEnqueued,
-					ReceiverType: testType,
-					Configs:      map[string]any{},
-					Details:      map[string]any{"notification_type": string("http")},
-					MaxTries:     3,
+					Status:          notification.MessageStatusEnqueued,
+					NotificationIDs: []string{"aa"},
+					ReceiverType:    testType,
+					Configs:         map[string]any{},
+					Details:         map[string]any{"notification_type": string("http")},
+					MaxTries:        3,
 				},
 			},
-			want1: []log.Notification{{NamespaceID: 1, SubscriptionID: 123, ReceiverID: 1}},
+			want1: []log.Notification{{NamespaceID: 1, NotificationID: "aa", SubscriptionID: 123, ReceiverID: 1}},
 			want2: false,
 		},
 	}
@@ -414,6 +416,7 @@ func TestRouterSubscriberService_PrepareMessageV2(t *testing.T) {
 		{
 			name: "should return no error if all flow passed and no silences",
 			n: notification.Notification{
+				ID:          "aa",
 				NamespaceID: 1,
 				Type:        receiver.TypeHTTP,
 				Template:    template.ReservedName_SystemDefault,
@@ -431,14 +434,15 @@ func TestRouterSubscriberService_PrepareMessageV2(t *testing.T) {
 			},
 			want: []notification.Message{
 				{
-					Status:       notification.MessageStatusEnqueued,
-					ReceiverType: testType,
-					Configs:      map[string]any{},
-					Details:      map[string]any{"notification_type": string("http")},
-					MaxTries:     3,
+					NotificationIDs: []string{"aa"},
+					Status:          notification.MessageStatusEnqueued,
+					ReceiverType:    testType,
+					Configs:         map[string]any{},
+					Details:         map[string]any{"notification_type": string("http")},
+					MaxTries:        3,
 				},
 			},
-			want1: []log.Notification{{NamespaceID: 1, SubscriptionID: 123, ReceiverID: 1}},
+			want1: []log.Notification{{NamespaceID: 1, NotificationID: "aa", SubscriptionID: 123, ReceiverID: 1}},
 			want2: false,
 		},
 	}

@@ -17,7 +17,7 @@ import (
 )
 
 func TestRouterReceiverService_PrepareMessage(t *testing.T) {
-	var notificationIDs = []string{"1234-5678"}
+	var notificationID = "1234-5678"
 	tests := []struct {
 		name    string
 		setup   func(*mocks.ReceiverService, *mocks.Notifier)
@@ -115,7 +115,7 @@ func TestRouterReceiverService_PrepareMessage(t *testing.T) {
 			want: []notification.Message{
 				{
 					Status:          notification.MessageStatusEnqueued,
-					NotificationIDs: notificationIDs,
+					NotificationIDs: []string{notificationID},
 					ReceiverType:    testType,
 					Configs:         map[string]any{},
 					Details:         map[string]any{"notification_type": string("")},

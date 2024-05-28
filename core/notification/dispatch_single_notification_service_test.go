@@ -136,8 +136,8 @@ func TestDispatchSingleNotificationServiceService_Dispatch(t *testing.T) {
 				r.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("notification.Notification")).Return(notification.Notification{}, nil)
 				mr.EXPECT().PrepareMessageV2(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("notification.Notification")).Return([]notification.Message{
 					{
-						ID:             "1234",
-						NotificationID: "n-1234",
+						ID:              "1234",
+						NotificationIDs: []string{"n-1234"},
 					},
 				}, []log.Notification{
 					{
@@ -167,8 +167,8 @@ func TestDispatchSingleNotificationServiceService_Dispatch(t *testing.T) {
 				r.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("notification.Notification")).Return(notification.Notification{}, nil)
 				mr.EXPECT().PrepareMessageV2(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("notification.Notification")).Return([]notification.Message{
 					{
-						ID:             "1234",
-						NotificationID: "n-1234",
+						ID:              "1234",
+						NotificationIDs: []string{"n-1234"},
 					},
 				}, []log.Notification{
 					{

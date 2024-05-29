@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -138,7 +137,6 @@ func (r AlertRepository) List(ctx context.Context, flt alert.Filter) ([]alert.Al
 	return alertsDomain, nil
 }
 
-// TODO to be deprecated, we should store silences in other places
 func (r AlertRepository) BulkUpdateSilence(ctx context.Context, alertIDs []int64, silenceStatus string) error {
 	sqlAlertIDs := pq.Array(alertIDs)
 	var silenceStatusPG sql.NullString
@@ -164,19 +162,4 @@ func (r AlertRepository) BulkUpdateSilence(ctx context.Context, alertIDs []int64
 	}
 
 	return nil
-}
-
-func (r *AlertRepository) WithTransaction(ctx context.Context) context.Context {
-	return r.client.WithTransaction(ctx, nil)
-}
-
-func (r *AlertRepository) Rollback(ctx context.Context, err error) error {
-	if txErr := r.client.Rollback(ctx); txErr != nil {
-		return fmt.Errorf("rollback error %s with error: %w", txErr.Error(), err)
-	}
-	return nil
-}
-
-func (r *AlertRepository) Commit(ctx context.Context) error {
-	return r.client.Commit(ctx)
 }

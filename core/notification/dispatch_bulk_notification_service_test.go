@@ -2,10 +2,10 @@ package notification_test
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	saltlog "github.com/goto/salt/log"
 	"github.com/goto/siren/core/log"
 	"github.com/goto/siren/core/notification"
@@ -444,7 +444,13 @@ func TestReduceMetaMessages(t *testing.T) {
 				t.Errorf("ReduceMetaMessages() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if diff := cmp.Diff(got, tt.want, cmpopts.SortSlices(func(i, j notification.MetaMessage) bool { return i.ReceiverID < j.ReceiverID })); diff != "" {
+			sort.Slice(got, func(i, j int) bool {
+				return got[i].ReceiverID < got[j].ReceiverID
+			})
+			sort.Slice(tt.want, func(i, j int) bool {
+				return tt.want[i].ReceiverID < tt.want[j].ReceiverID
+			})
+			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("ReduceMetaMessages() diff = %v", diff)
 			}
 		})

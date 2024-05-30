@@ -2,6 +2,7 @@ package notification
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/goto/siren/core/log"
@@ -243,19 +244,26 @@ func (s *RouterSubscriberService) instrumentDispatchSubscription(ctx context.Con
 }
 
 func (s *RouterSubscriberService) PrepareMetaMessages(ctx context.Context, n Notification) (metaMessages []MetaMessage, notificationLogs []log.Notification, err error) {
+	var metricStatus = metricRouterSubscriberStatusSuccess
+
+	defer func() {
+		s.instrumentDispatchSubscription(ctx, metricRouterSubscriberAttributePrepareMessage, metricStatus, err)
+	}()
+
 	receiversView, err := s.deps.SubscriptionService.MatchByLabelsV2(ctx, n.NamespaceID, n.Labels)
 	if err != nil {
-		return nil, nil, &DispatchError{
-			Status: metricRouterSubscriberStatusMatchError,
-			Err:    err,
-		}
+		metricStatus = metricRouterSubscriberStatusMatchError
+		return nil, nil, err
 	}
 
 	if len(receiversView) == 0 {
-		return nil, nil, &DispatchError{
-			Status: metricRouterSubscriberStatusMatchNotFound,
-			Err:    errors.ErrInvalid.WithMsgf("not matching any subscription"),
+		metricStatus = metricRouterSubscriberStatusMatchNotFound
+		errMessage := fmt.Sprintf("not matching any subscription for notification: %v", n)
+		nJson, err := json.MarshalIndent(n, "", "  ")
+		if err == nil {
+			errMessage = fmt.Sprintf("not matching any subscription for notification: %s", string(nJson))
 		}
+		return nil, nil, errors.ErrInvalid.WithMsgf(errMessage)
 	}
 
 	for _, rcv := range receiversView {

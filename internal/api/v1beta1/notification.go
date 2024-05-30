@@ -96,6 +96,9 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 }
 
 func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta1.PostBulkNotificationsRequest) (*sirenv1beta1.PostBulkNotificationsResponse, error) {
+	if len(req.GetNotifications()) == 0 {
+		return nil, s.generateRPCErr(errors.ErrInvalid.WithMsgf("no bulk notifications found"))
+	}
 	idempotencyScope := api.GetHeaderString(ctx, s.headers.IdempotencyScope)
 	if idempotencyScope == "" {
 		idempotencyScope = notificationAPIScope

@@ -447,8 +447,14 @@ func TestReduceMetaMessages(t *testing.T) {
 			sort.Slice(got, func(i, j int) bool {
 				return got[i].ReceiverID < got[j].ReceiverID
 			})
+			sort.Slice(got, func(i, j int) bool {
+				return len(got[i].SubscriptionIDs) < len(got[j].SubscriptionIDs)
+			})
 			sort.Slice(tt.want, func(i, j int) bool {
 				return tt.want[i].ReceiverID < tt.want[j].ReceiverID
+			})
+			sort.Slice(tt.want, func(i, j int) bool {
+				return len(tt.want[i].SubscriptionIDs) < len(tt.want[j].SubscriptionIDs)
 			})
 			if diff := cmp.Diff(got, tt.want); diff != "" {
 				t.Errorf("ReduceMetaMessages() diff = %v", diff)

@@ -2,7 +2,7 @@ NAME="github.com/goto/siren"
 LAST_COMMIT := $(shell git rev-parse --short HEAD)
 LAST_TAG := "$(shell git rev-list --tags --max-count=1)"
 APP_VERSION := "$(shell git describe --tags ${LAST_TAG})-next"
-PROTON_COMMIT := "bae8e8169691d56bb0314a33bb369c72256bc63f"
+PROTON_COMMIT := "f3199ce75d2c74c545bae14c646b10516f062a3a"
 
 .PHONY: all build test clean dist vet proto install
 

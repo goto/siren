@@ -1,3 +1,4 @@
+version: 2
 project_name: siren
 
 release:
@@ -63,6 +64,9 @@ dockers:
       - "docker.io/gotocompany/{{.ProjectName}}:latest"
       - "docker.io/gotocompany/{{.ProjectName}}:{{ .Version }}"
       - "docker.io/gotocompany/{{.ProjectName}}:{{ .Tag }}-amd64"
+      - "ghcr.io/goto/{{.ProjectName}}:latest"
+      - "ghcr.io/goto/{{.ProjectName}}:{{ .Version }}"
+      - "ghcr.io/goto/{{.ProjectName}}:{{ .Tag }}-amd64"
 
 brews:
   - name: siren

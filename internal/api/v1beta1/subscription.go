@@ -36,6 +36,7 @@ func (s *GRPCServer) ListSubscriptions(ctx context.Context, req *sirenv1beta1.Li
 			NotificationMatch:          req.GetNotificationMatch(),
 			ReceiverID:                 req.GetReceiverId(),
 			SubscriptionReceiverLabels: req.GetSubscriptionReceiverLabels(),
+			WithRelationLabels:         req.GetWithRelationLabels(),
 		})
 	} else {
 		subscriptions, err = s.subscriptionService.List(ctx, subscription.Filter{

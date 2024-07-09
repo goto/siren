@@ -51,8 +51,9 @@ func (rcv *ReceiverView) FromReceiver(r receiver.Receiver) {
 }
 
 type Receiver struct {
-	ID            uint64         `json:"id"`
-	Configuration map[string]any `json:"configuration"`
+	ID             uint64            `json:"id"`
+	Configuration  map[string]any    `json:"configuration"`
+	RelationLabels map[string]string `json:"relation_labels"`
 
 	// Type won't be exposed to the end-user, this is used to add more details for notification purposes
 	Type string

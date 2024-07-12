@@ -20,7 +20,7 @@ type LogService interface {
 }
 
 type NotificationService interface {
-	Dispatch(context.Context, []notification.Notification, string) ([]string, error)
+	Dispatch(context.Context, []notification.Notification) ([]string, error)
 }
 
 // Service handles business logic
@@ -78,10 +78,8 @@ func (s *Service) CreateAlerts(ctx context.Context, providerType string, provide
 		}
 
 		// failure on dispatch won't rollback the db changes
-		for _, n := range ns {
-			if _, err := s.notificationService.Dispatch(ctx, []notification.Notification{n}, notification.DispatchKindSingleNotification); err != nil {
-				s.logger.Warn("failed to send alert as notification", "err", err, "notification", n)
-			}
+		if _, err := s.notificationService.Dispatch(ctx, ns); err != nil {
+			s.logger.Warn("failed to send alert as notification", "err", err, "notifications", ns)
 		}
 
 	} else {

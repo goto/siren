@@ -51,8 +51,7 @@ func (s *NotificationSubscriptionTestSuite) SetupTest() {
 		GRPC: server.GRPCConfig{
 			Port: apiGRPCPort,
 		},
-		EncryptionKey:         testEncryptionKey,
-		SubscriptionV2Enabled: true,
+		EncryptionKey: testEncryptionKey,
 	}
 	s.appConfig.Notification = notification.Config{
 		MessageHandler: notification.HandlerConfig{

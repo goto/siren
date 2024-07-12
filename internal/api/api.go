@@ -80,7 +80,7 @@ type TemplateService interface {
 }
 
 type NotificationService interface {
-	Dispatch(context.Context, []notification.Notification, string) ([]string, error)
+	Dispatch(context.Context, []notification.Notification) ([]string, error)
 	RemoveIdempotencies(ctx context.Context, TTL time.Duration) error
 	CheckIdempotency(ctx context.Context, scope, key string) (string, error)
 	InsertIdempotency(ctx context.Context, scope, key, notificationID string) error

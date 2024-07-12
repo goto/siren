@@ -25,12 +25,6 @@ func WithDebugRequest(debugRequest bool) GRPCServerOption {
 	}
 }
 
-func WithSubscriptionV2(subscriptionV2Enabled bool) GRPCServerOption {
-	return func(s *GRPCServer) {
-		s.cfg.subscriptionV2Enabled = subscriptionV2Enabled
-	}
-}
-
 type GRPCServer struct {
 	logger  log.Logger
 	cfg     Config

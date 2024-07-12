@@ -5,6 +5,6 @@ import (
 )
 
 var (
-	ErrNoMessage                   = errors.New("no message found")
+	ErrNoMessage                   = errors.New("no message sent, probably because not matching any subscription or receiver")
 	ErrRouteSubscriberNoMatchFound = errors.New("not matching any subscription")
 )

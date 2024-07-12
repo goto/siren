@@ -165,30 +165,16 @@ func InitDeps(
 	routerRegistry := map[string]notification.Router{
 		notification.RouterReceiver: notification.NewRouterReceiverService(
 			notificationDeps,
-			notifierRegistry,
 		),
 		notification.RouterSubscriber: notification.NewRouterSubscriberService(
 			notificationDeps,
-			notifierRegistry,
-		),
-	}
-
-	dispatchServiceRegistry := map[string]notification.Dispatcher{
-		notification.DispatchKindBulkNotification: notification.NewDispatchBulkNotificationService(
-			notificationDeps,
-			notifierRegistry,
-			routerRegistry,
-		),
-		notification.DispatchKindSingleNotification: notification.NewDispatchSingleNotificationService(
-			notificationDeps,
-			notifierRegistry,
-			routerRegistry,
 		),
 	}
 
 	notificationService := notification.NewService(
 		notificationDeps,
-		dispatchServiceRegistry,
+		routerRegistry,
+		notifierRegistry,
 	)
 
 	alertService := alert.NewService(

@@ -52,8 +52,7 @@ func (s *CortexWebhookTestSuite) SetupTest() {
 		GRPC: server.GRPCConfig{
 			Port: apiGRPCPort,
 		},
-		EncryptionKey:         testEncryptionKey,
-		SubscriptionV2Enabled: true,
+		EncryptionKey: testEncryptionKey,
 	}
 	s.appConfig.Notification = notification.Config{
 		MessageHandler: notification.HandlerConfig{
@@ -64,7 +63,6 @@ func (s *CortexWebhookTestSuite) SetupTest() {
 		},
 	}
 	s.appConfig.Telemetry.OpenTelemetry.Enabled = false
-	s.appConfig.Service.EnableSilenceFeature = true
 
 	s.testBench, err = InitCortexEnvironment(s.appConfig)
 	s.Require().NoError(err)

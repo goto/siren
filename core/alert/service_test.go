@@ -134,7 +134,7 @@ func TestService_CreateAlerts(t *testing.T) {
 				}, 1, nil)
 				ar.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("alert.Alert")).Return(alert.Alert{ID: 1, ProviderID: 1, ResourceName: "foo", Severity: "CRITICAL", MetricName: "lag", MetricValue: "20",
 					Rule: "lagHigh", TriggeredAt: timenow}, nil)
-				ns.EXPECT().Dispatch(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("[]notification.Notification"), mock.AnythingOfType("string")).Return(nil, nil)
+				ns.EXPECT().Dispatch(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("[]notification.Notification")).Return(nil, nil)
 			},
 			alertsToBeCreated: alertsToBeCreated,
 			expectedFiringLen: 1,

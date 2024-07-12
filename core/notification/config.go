@@ -13,10 +13,6 @@ type Config struct {
 	MessageHandler          HandlerConfig `mapstructure:"message_handler" yaml:"message_handler"`
 	DLQHandler              HandlerConfig `mapstructure:"dlq_handler" yaml:"dlq_handler"`
 	GroupBy                 []string      `mapstructure:"group_by" yaml:"group_by"`
-
-	// experimental: derived from service.Config
-	SubscriptionV2Enabled bool
-	EnableSilenceFeature  bool
 }
 
 type HandlerConfig struct {

@@ -57,7 +57,7 @@ func TestGRPCServer_ListSubscriptions(t *testing.T) {
 			},
 		}
 
-		mockedSubscriptionService.EXPECT().List(context.TODO(), subscription.Filter{}).Return(dummyResult, nil).Once()
+		mockedSubscriptionService.EXPECT().ListV2(context.TODO(), subscription.Filter{}).Return(dummyResult, nil).Once()
 		res, err := dummyGRPCServer.ListSubscriptions(context.TODO(), &sirenv1beta1.ListSubscriptionsRequest{})
 		assert.Nil(t, err)
 		assert.Equal(t, 1, len(res.GetSubscriptions()))
@@ -72,7 +72,7 @@ func TestGRPCServer_ListSubscriptions(t *testing.T) {
 
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().List(context.TODO(), subscription.Filter{}).Return(nil, errors.New("random error")).Once()
+		mockedSubscriptionService.EXPECT().ListV2(context.TODO(), subscription.Filter{}).Return(nil, errors.New("random error")).Once()
 		res, err := dummyGRPCServer.ListSubscriptions(context.TODO(), &sirenv1beta1.ListSubscriptionsRequest{})
 		assert.Nil(t, res)
 		assert.EqualError(t, err, "rpc error: code = Internal desc = some unexpected error occurred")
@@ -96,7 +96,7 @@ func TestGRPCServer_GetSubscription(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 
-		mockedSubscriptionService.EXPECT().Get(context.TODO(), uint64(1)).Return(dummyResult, nil).Once()
+		mockedSubscriptionService.EXPECT().GetV2(context.TODO(), uint64(1)).Return(dummyResult, nil).Once()
 		res, err := dummyGRPCServer.GetSubscription(context.TODO(), &sirenv1beta1.GetSubscriptionRequest{Id: 1})
 		assert.Nil(t, err)
 		assert.Equal(t, uint64(1), res.GetSubscription().GetId())
@@ -108,7 +108,7 @@ func TestGRPCServer_GetSubscription(t *testing.T) {
 	t.Run("should return error Not Found if subscriptions not found", func(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
-		mockedSubscriptionService.EXPECT().Get(context.TODO(), uint64(1)).Return(nil, errors.ErrNotFound).Once()
+		mockedSubscriptionService.EXPECT().GetV2(context.TODO(), uint64(1)).Return(nil, errors.ErrNotFound).Once()
 		res, err := dummyGRPCServer.GetSubscription(context.TODO(), &sirenv1beta1.GetSubscriptionRequest{Id: 1})
 		assert.Nil(t, res)
 		assert.EqualError(t, err, "rpc error: code = NotFound desc = requested entity not found")
@@ -117,7 +117,7 @@ func TestGRPCServer_GetSubscription(t *testing.T) {
 	t.Run("should return error Internal if getting subscription fails", func(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
-		mockedSubscriptionService.EXPECT().Get(context.TODO(), uint64(1)).
+		mockedSubscriptionService.EXPECT().GetV2(context.TODO(), uint64(1)).
 			Return(nil, errors.New("random error")).Once()
 		res, err := dummyGRPCServer.GetSubscription(context.TODO(), &sirenv1beta1.GetSubscriptionRequest{Id: 1})
 		assert.Nil(t, res)
@@ -156,7 +156,7 @@ func TestGRPCServer_CreateSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Create(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
+		mockedSubscriptionService.EXPECT().CreateV2(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
 			_a1.ID = dummyResult.ID
 		}).Return(nil).Once()
 
@@ -174,7 +174,7 @@ func TestGRPCServer_CreateSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Create(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
+		mockedSubscriptionService.EXPECT().CreateV2(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
 			_a1.ID = dummyResult.ID
 		}).Return(errors.ErrInvalid).Once()
 
@@ -192,7 +192,7 @@ func TestGRPCServer_CreateSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Create(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
+		mockedSubscriptionService.EXPECT().CreateV2(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
 			_a1.ID = dummyResult.ID
 		}).Return(errors.ErrConflict).Once()
 
@@ -210,7 +210,7 @@ func TestGRPCServer_CreateSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Create(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
+		mockedSubscriptionService.EXPECT().CreateV2(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
 			_a1.ID = dummyResult.ID
 		}).Return(errors.New("random error")).Once()
 
@@ -251,7 +251,7 @@ func TestGRPCServer_UpdateSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Update(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
+		mockedSubscriptionService.EXPECT().UpdateV2(context.TODO(), payload).Run(func(_a0 context.Context, _a1 *subscription.Subscription) {
 			_a1.ID = uint64(1)
 		}).Return(nil).Once()
 
@@ -271,7 +271,7 @@ func TestGRPCServer_UpdateSubscription(t *testing.T) {
 	t.Run("should return error Invalid Argument if updating subscriptions return err invalid", func(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
-		mockedSubscriptionService.EXPECT().Update(context.TODO(), payload).Return(errors.ErrInvalid).Once()
+		mockedSubscriptionService.EXPECT().UpdateV2(context.TODO(), payload).Return(errors.ErrInvalid).Once()
 
 		res, err := dummyGRPCServer.UpdateSubscription(context.TODO(), &sirenv1beta1.UpdateSubscriptionRequest{
 			Id:        1,
@@ -289,7 +289,7 @@ func TestGRPCServer_UpdateSubscription(t *testing.T) {
 	t.Run("should return error AlreadyExist if updating subscriptions return err conflict", func(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
-		mockedSubscriptionService.EXPECT().Update(context.TODO(), payload).Return(errors.ErrConflict).Once()
+		mockedSubscriptionService.EXPECT().UpdateV2(context.TODO(), payload).Return(errors.ErrConflict).Once()
 
 		res, err := dummyGRPCServer.UpdateSubscription(context.TODO(), &sirenv1beta1.UpdateSubscriptionRequest{
 			Id:        1,
@@ -307,7 +307,7 @@ func TestGRPCServer_UpdateSubscription(t *testing.T) {
 	t.Run("should return error Internal if updating subscriptions fails", func(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
-		mockedSubscriptionService.EXPECT().Update(context.TODO(), payload).Return(errors.New("random error")).Once()
+		mockedSubscriptionService.EXPECT().UpdateV2(context.TODO(), payload).Return(errors.New("random error")).Once()
 
 		res, err := dummyGRPCServer.UpdateSubscription(context.TODO(), &sirenv1beta1.UpdateSubscriptionRequest{
 			Id:        1,
@@ -325,7 +325,7 @@ func TestGRPCServer_UpdateSubscription(t *testing.T) {
 	t.Run("should return error Invalid for bad requests", func(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
-		mockedSubscriptionService.EXPECT().Update(context.TODO(), payload).Return(errors.ErrInvalid).Once()
+		mockedSubscriptionService.EXPECT().UpdateV2(context.TODO(), payload).Return(errors.ErrInvalid).Once()
 
 		res, err := dummyGRPCServer.UpdateSubscription(context.TODO(), &sirenv1beta1.UpdateSubscriptionRequest{
 			Id:        1,
@@ -346,7 +346,7 @@ func TestGRPCServer_DeleteSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Delete(context.TODO(), uint64(1)).Return(nil).Once()
+		mockedSubscriptionService.EXPECT().DeleteV2(context.TODO(), uint64(1)).Return(nil).Once()
 		res, err := dummyGRPCServer.DeleteSubscription(context.TODO(), &sirenv1beta1.DeleteSubscriptionRequest{Id: 1})
 		assert.Nil(t, err)
 		assert.Equal(t, &sirenv1beta1.DeleteSubscriptionResponse{}, res)
@@ -356,7 +356,7 @@ func TestGRPCServer_DeleteSubscription(t *testing.T) {
 		mockedSubscriptionService := &mocks.SubscriptionService{}
 		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{SubscriptionService: mockedSubscriptionService})
 
-		mockedSubscriptionService.EXPECT().Delete(context.TODO(), uint64(1)).Return(errors.New("random error")).Once()
+		mockedSubscriptionService.EXPECT().DeleteV2(context.TODO(), uint64(1)).Return(errors.New("random error")).Once()
 		res, err := dummyGRPCServer.DeleteSubscription(context.TODO(), &sirenv1beta1.DeleteSubscriptionRequest{Id: 1})
 		assert.EqualError(t, err, "rpc error: code = Internal desc = some unexpected error occurred")
 		assert.Nil(t, res)

@@ -75,7 +75,7 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 			Template:          notificationTemplate,
 			ReceiverSelectors: receiverSelectors,
 		},
-	}, notification.DispatchKindSingleNotification)
+	})
 	if err != nil {
 		return nil, s.generateRPCErr(err)
 	}
@@ -135,7 +135,7 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 		})
 	}
 
-	notificationIDs, err := s.notificationService.Dispatch(ctx, notifications, notification.DispatchKindBulkNotification)
+	notificationIDs, err := s.notificationService.Dispatch(ctx, notifications)
 	if err != nil {
 		return nil, s.generateRPCErr(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/goto/siren/core/rule"
+	"github.com/goto/siren/internal/api"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -17,7 +18,7 @@ func (s *GRPCServer) ListRules(ctx context.Context, req *sirenv1beta1.ListRulesR
 		NamespaceID:  req.GetProviderNamespace(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	rulesProto := []*sirenv1beta1.Rule{}
@@ -53,7 +54,7 @@ func (s *GRPCServer) UpdateRule(ctx context.Context, req *sirenv1beta1.UpdateRul
 	}
 
 	if err := s.ruleService.Upsert(ctx, rl); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	responseVariables := make([]*sirenv1beta1.Variables, 0)

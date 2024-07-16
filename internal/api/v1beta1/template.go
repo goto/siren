@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/goto/siren/core/template"
+	"github.com/goto/siren/internal/api"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 )
 
@@ -12,7 +13,7 @@ func (s *GRPCServer) ListTemplates(ctx context.Context, req *sirenv1beta1.ListTe
 		Tag: req.GetTag(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger,err)
 	}
 
 	items := []*sirenv1beta1.Template{}
@@ -28,7 +29,7 @@ func (s *GRPCServer) ListTemplates(ctx context.Context, req *sirenv1beta1.ListTe
 func (s *GRPCServer) GetTemplate(ctx context.Context, req *sirenv1beta1.GetTemplateRequest) (*sirenv1beta1.GetTemplateResponse, error) {
 	tmpl, err := s.templateService.GetByName(ctx, req.GetName())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger,err)
 	}
 
 	return &sirenv1beta1.GetTemplateResponse{
@@ -56,7 +57,7 @@ func (s *GRPCServer) UpsertTemplate(ctx context.Context, req *sirenv1beta1.Upser
 	}
 
 	if err := s.templateService.Upsert(ctx, tmpl); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger,err)
 	}
 
 	return &sirenv1beta1.UpsertTemplateResponse{
@@ -67,7 +68,7 @@ func (s *GRPCServer) UpsertTemplate(ctx context.Context, req *sirenv1beta1.Upser
 func (s *GRPCServer) DeleteTemplate(ctx context.Context, req *sirenv1beta1.DeleteTemplateRequest) (*sirenv1beta1.DeleteTemplateResponse, error) {
 	err := s.templateService.Delete(ctx, req.GetName())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger,err)
 	}
 	return &sirenv1beta1.DeleteTemplateResponse{}, nil
 }
@@ -75,7 +76,7 @@ func (s *GRPCServer) DeleteTemplate(ctx context.Context, req *sirenv1beta1.Delet
 func (s *GRPCServer) RenderTemplate(ctx context.Context, req *sirenv1beta1.RenderTemplateRequest) (*sirenv1beta1.RenderTemplateResponse, error) {
 	body, err := s.templateService.Render(ctx, req.GetName(), req.GetVariables())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger,err)
 	}
 	return &sirenv1beta1.RenderTemplateResponse{
 		Body: body,

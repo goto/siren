@@ -10,9 +10,11 @@ import (
 	"github.com/goto/salt/log"
 	"github.com/goto/salt/mux"
 	"github.com/goto/siren/internal/api"
+	v1 "github.com/goto/siren/internal/api/v1"
 	"github.com/goto/siren/internal/api/v1beta1"
 	"github.com/goto/siren/pkg/zaputil"
 	swagger "github.com/goto/siren/proto"
+	sirenv1 "github.com/goto/siren/proto/gotocompany/siren/v1"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -124,16 +126,28 @@ func RunServer(
 	runtimeCtx, runtimeCancel := context.WithCancel(ctx)
 	defer runtimeCancel()
 
-	sirenServiceRPC := v1beta1.NewGRPCServer(
+	sirenV1beta1ServiceRPC := v1beta1.NewGRPCServer(
 		logger,
 		c.APIHeaders,
 		apiDeps,
 		v1beta1.WithGlobalSubscription(c.UseGlobalSubscription),
 		v1beta1.WithDebugRequest(c.DebugRequest),
 	)
-	grpcServer.RegisterService(&sirenv1beta1.SirenService_ServiceDesc, sirenServiceRPC)
-	grpcServer.RegisterService(&grpc_health_v1.Health_ServiceDesc, sirenServiceRPC)
+	sirenV1ServiceRPC := v1.NewGRPCServer(
+		logger,
+		c.APIHeaders,
+		apiDeps,
+		v1.WithGlobalSubscription(c.UseGlobalSubscription),
+		v1.WithDebugRequest(c.DebugRequest),
+	)
+	grpcServer.RegisterService(&sirenv1beta1.SirenService_ServiceDesc, sirenV1beta1ServiceRPC)
+	grpcServer.RegisterService(&grpc_health_v1.Health_ServiceDesc, sirenV1beta1ServiceRPC)
 	if err := sirenv1beta1.RegisterSirenServiceHandler(runtimeCtx, httpGateway, grpcConn); err != nil {
+		return err
+	}
+
+	grpcServer.RegisterService(&sirenv1.SirenService_ServiceDesc, sirenV1ServiceRPC)
+	if err := sirenv1.RegisterSirenServiceHandler(runtimeCtx, httpGateway, grpcConn); err != nil {
 		return err
 	}
 

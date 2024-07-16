@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/goto/siren/core/provider"
+	"github.com/goto/siren/internal/api"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 )
 
@@ -13,14 +14,14 @@ func (s *GRPCServer) ListProviders(ctx context.Context, req *sirenv1beta1.ListPr
 		Type: req.GetType(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.Provider{}
 	for _, prov := range providers {
 		item, err := prov.ToV1beta1Proto()
 		if err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 
 		items = append(items, item)
@@ -41,7 +42,7 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *sirenv1beta1.Creat
 	}
 
 	if err := s.providerService.Create(ctx, prv); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.CreateProviderResponse{
@@ -52,12 +53,12 @@ func (s *GRPCServer) CreateProvider(ctx context.Context, req *sirenv1beta1.Creat
 func (s *GRPCServer) GetProvider(ctx context.Context, req *sirenv1beta1.GetProviderRequest) (*sirenv1beta1.GetProviderResponse, error) {
 	fetchedProvider, err := s.providerService.Get(ctx, req.GetId())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	protoProv, err := fetchedProvider.ToV1beta1Proto()
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.GetProviderResponse{
@@ -76,7 +77,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *sirenv1beta1.Updat
 	}
 
 	if err := s.providerService.Update(ctx, prv); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.UpdateProviderResponse{
@@ -87,7 +88,7 @@ func (s *GRPCServer) UpdateProvider(ctx context.Context, req *sirenv1beta1.Updat
 func (s *GRPCServer) DeleteProvider(ctx context.Context, req *sirenv1beta1.DeleteProviderRequest) (*sirenv1beta1.DeleteProviderResponse, error) {
 	err := s.providerService.Delete(ctx, req.GetId())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.DeleteProviderResponse{}, nil

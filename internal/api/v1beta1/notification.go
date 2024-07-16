@@ -40,7 +40,7 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 		} else if errors.Is(err, errors.ErrNotFound) {
 			s.logger.Debug("no idempotency found with detail", "scope", idempotencyScope, "key", idempotencyKey)
 		} else {
-			return nil, s.generateRPCErr(fmt.Errorf("error when checking idempotency: %w", err))
+			return nil, api.GenerateRPCErr(s.logger, fmt.Errorf("error when checking idempotency: %w", err))
 		}
 	}
 
@@ -51,7 +51,7 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 			vString, ok := v.(string)
 			if !ok {
 				err := errors.ErrInvalid.WithMsgf("invalid receiver selectors, value must be string but found %v", v)
-				return nil, s.generateRPCErr(err)
+				return nil, api.GenerateRPCErr(s.logger, err)
 			}
 			mss[k] = vString
 		}
@@ -59,7 +59,7 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 	}
 
 	if err := s.validatePostNotificationPayload(receiverSelectors, req.GetLabels()); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	var notificationTemplate = template.ReservedName_SystemDefault
@@ -77,16 +77,16 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 		},
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	if len(notificationIDs) != 1 {
-		return nil, s.generateRPCErr(errors.ErrInternal.WithMsgf("should send 1 notification only but got %d", len(notificationIDs)))
+		return nil, api.GenerateRPCErr(s.logger, errors.ErrInternal.WithMsgf("should send 1 notification only but got %d", len(notificationIDs)))
 	}
 
 	if idempotencyKey != "" {
 		if err := s.notificationService.InsertIdempotency(ctx, idempotencyScope, idempotencyKey, notificationIDs[0]); err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 
 func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta1.PostBulkNotificationsRequest) (*sirenv1beta1.PostBulkNotificationsResponse, error) {
 	if len(req.GetNotifications()) == 0 {
-		return nil, s.generateRPCErr(errors.ErrInvalid.WithMsgf("no bulk notifications found"))
+		return nil, api.GenerateRPCErr(s.logger, errors.ErrInvalid.WithMsgf("no bulk notifications found"))
 	}
 	idempotencyScope := api.GetHeaderString(ctx, s.headers.IdempotencyScope)
 	if idempotencyScope == "" {
@@ -114,7 +114,7 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 		} else if errors.Is(err, errors.ErrNotFound) {
 			s.logger.Debug("no idempotency found with detail", "scope", idempotencyScope, "key", idempotencyKey)
 		} else {
-			return nil, s.generateRPCErr(fmt.Errorf("error when checking idempotency: %w", err))
+			return nil, api.GenerateRPCErr(s.logger, fmt.Errorf("error when checking idempotency: %w", err))
 		}
 	}
 
@@ -137,7 +137,7 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 
 	notificationIDs, err := s.notificationService.Dispatch(ctx, notifications)
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	if len(notificationIDs) == 0 {
@@ -148,7 +148,7 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 
 	if idempotencyKey != "" {
 		if err := s.notificationService.InsertIdempotency(ctx, idempotencyScope, idempotencyKey, strings.Join(notificationIDs, ",")); err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 	}
 
@@ -160,14 +160,14 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 func (s *GRPCServer) ListNotificationMessages(ctx context.Context, req *sirenv1beta1.ListNotificationMessagesRequest) (*sirenv1beta1.ListNotificationMessagesResponse, error) {
 	resp, err := s.notificationService.ListNotificationMessages(ctx, req.GetNotificationId())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.NotificationMessage{}
 	for _, msg := range resp {
 		item, err := msg.ToV1beta1Proto()
 		if err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 
 		items = append(items, item)
@@ -185,7 +185,7 @@ func (s *GRPCServer) ListNotifications(ctx context.Context, req *sirenv1beta1.Li
 		ReceiverSelector: req.GetReceiverSelectors(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.Notification{}
@@ -193,7 +193,7 @@ func (s *GRPCServer) ListNotifications(ctx context.Context, req *sirenv1beta1.Li
 	for _, notification := range notifications {
 		data, err := structpb.NewStruct(notification.Data)
 		if err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 
 		item := &sirenv1beta1.Notification{

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/goto/siren/core/receiver"
+	"github.com/goto/siren/internal/api"
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/secret"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
@@ -25,14 +26,14 @@ func (s *GRPCServer) ListReceivers(ctx context.Context, req *sirenv1beta1.ListRe
 		MultipleLabels: filterMultipleLabels,
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.Receiver{}
 	for _, rcv := range receivers {
 		configurations, err := structpb.NewStruct(sanitizeConfigMap(rcv.Configurations))
 		if err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 
 		item := &sirenv1beta1.Receiver{
@@ -54,7 +55,7 @@ func (s *GRPCServer) ListReceivers(ctx context.Context, req *sirenv1beta1.ListRe
 
 func (s *GRPCServer) CreateReceiver(ctx context.Context, req *sirenv1beta1.CreateReceiverRequest) (*sirenv1beta1.CreateReceiverResponse, error) {
 	if !receiver.IsTypeSupported(req.GetType()) {
-		return nil, s.generateRPCErr(errors.ErrInvalid.WithMsgf("unsupported type %s", req.GetType()))
+		return nil, api.GenerateRPCErr(s.logger, errors.ErrInvalid.WithMsgf("unsupported type %s", req.GetType()))
 	}
 
 	rcv := &receiver.Receiver{
@@ -67,7 +68,7 @@ func (s *GRPCServer) CreateReceiver(ctx context.Context, req *sirenv1beta1.Creat
 
 	err := s.receiverService.Create(ctx, rcv)
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.CreateReceiverResponse{
@@ -78,17 +79,17 @@ func (s *GRPCServer) CreateReceiver(ctx context.Context, req *sirenv1beta1.Creat
 func (s *GRPCServer) GetReceiver(ctx context.Context, req *sirenv1beta1.GetReceiverRequest) (*sirenv1beta1.GetReceiverResponse, error) {
 	rcv, err := s.receiverService.Get(ctx, req.GetId(), receiver.GetWithData())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	data, err := structpb.NewStruct(rcv.Data)
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	configuration, err := structpb.NewStruct(sanitizeConfigMap(rcv.Configurations))
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.GetReceiverResponse{
@@ -116,7 +117,7 @@ func (s *GRPCServer) UpdateReceiver(ctx context.Context, req *sirenv1beta1.Updat
 	}
 
 	if err := s.receiverService.Update(ctx, rcv); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.UpdateReceiverResponse{
@@ -127,7 +128,7 @@ func (s *GRPCServer) UpdateReceiver(ctx context.Context, req *sirenv1beta1.Updat
 func (s *GRPCServer) DeleteReceiver(ctx context.Context, req *sirenv1beta1.DeleteReceiverRequest) (*sirenv1beta1.DeleteReceiverResponse, error) {
 	err := s.receiverService.Delete(ctx, req.GetId())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.DeleteReceiverResponse{}, nil

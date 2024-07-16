@@ -5,6 +5,7 @@ import (
 
 	"github.com/goto/siren/core/subscription"
 	"github.com/goto/siren/core/subscriptionreceiver"
+	"github.com/goto/siren/internal/api"
 	"github.com/goto/siren/pkg/errors"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -38,7 +39,7 @@ func (s *GRPCServer) ListSubscriptions(ctx context.Context, req *sirenv1beta1.Li
 		WithSubscriptionReceiver:   req.GetWithSubscriptionReceiver(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.Subscription{}
@@ -61,7 +62,7 @@ func (s *GRPCServer) ListSubscriptions(ctx context.Context, req *sirenv1beta1.Li
 
 		metadata, err := structpb.NewStruct(sub.Metadata)
 		if err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 
 		item := &sirenv1beta1.Subscription{
@@ -108,7 +109,7 @@ func (s *GRPCServer) CreateSubscription(ctx context.Context, req *sirenv1beta1.C
 	var err error
 
 	if err = s.subscriptionService.CreateV2(ctx, sub); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.CreateSubscriptionResponse{
@@ -124,7 +125,7 @@ func (s *GRPCServer) GetSubscription(ctx context.Context, req *sirenv1beta1.GetS
 
 	sub, err = s.subscriptionService.GetV2(ctx, req.GetId())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	receivers := make([]*sirenv1beta1.ReceiverMetadata, 0)
@@ -142,7 +143,7 @@ func (s *GRPCServer) GetSubscription(ctx context.Context, req *sirenv1beta1.GetS
 
 	metadata, err := structpb.NewStruct(sub.Metadata)
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.GetSubscriptionResponse{
@@ -175,7 +176,7 @@ func (s *GRPCServer) UpdateSubscription(ctx context.Context, req *sirenv1beta1.U
 	var err error
 
 	if err = s.subscriptionService.UpdateV2(ctx, sub); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.UpdateSubscriptionResponse{
@@ -187,7 +188,7 @@ func (s *GRPCServer) DeleteSubscription(ctx context.Context, req *sirenv1beta1.D
 	var err error
 
 	if err = s.subscriptionService.DeleteV2(ctx, req.GetId()); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 	return &sirenv1beta1.DeleteSubscriptionResponse{}, nil
 }
@@ -200,7 +201,7 @@ func (s *GRPCServer) AddSubscriptionReceiver(ctx context.Context, req *sirenv1be
 			Labels:         req.GetLabels(),
 		},
 	}); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 	return &sirenv1beta1.AddSubscriptionReceiverResponse{
 		SubscriptionId: req.GetSubscriptionId(),
@@ -215,7 +216,7 @@ func (s *GRPCServer) UpdateSubscriptionReceiver(ctx context.Context, req *sirenv
 		ReceiverID:     req.GetReceiverId(),
 		Labels:         req.GetLabels(),
 	}); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 	return &sirenv1beta1.UpdateSubscriptionReceiverResponse{
 		SubscriptionId: req.GetSubscriptionId(),
@@ -233,7 +234,7 @@ func (s *GRPCServer) DeleteSubscriptionReceiver(ctx context.Context, req *sirenv
 			},
 		},
 	}); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 	return &sirenv1beta1.DeleteSubscriptionReceiverResponse{}, nil
 }
@@ -241,7 +242,7 @@ func (s *GRPCServer) DeleteSubscriptionReceiver(ctx context.Context, req *sirenv
 func (s *GRPCServer) ListSubscriptionReceivers(ctx context.Context, req *sirenv1beta1.ListSubscriptionReceiversRequest) (*sirenv1beta1.ListSubscriptionReceiversResponse, error) {
 	subscriptionID := req.GetSubscriptionId()
 	if subscriptionID == 0 {
-		return nil, s.generateRPCErr(errors.ErrInvalid.WithMsgf("subscription id cannot be zero or empty"))
+		return nil, api.GenerateRPCErr(s.logger, errors.ErrInvalid.WithMsgf("subscription id cannot be zero or empty"))
 	}
 
 	relations, err := s.subscriptionReceiverService.List(ctx, subscriptionreceiver.Filter{
@@ -253,7 +254,7 @@ func (s *GRPCServer) ListSubscriptionReceivers(ctx context.Context, req *sirenv1
 	})
 
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.SubscriptionReceiverRelation{}

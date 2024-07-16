@@ -7,6 +7,7 @@ import (
 
 	"github.com/goto/siren/core/receiver"
 	"github.com/goto/siren/core/silence"
+	"github.com/goto/siren/core/subscriptionreceiver"
 )
 
 type Transactor interface {
@@ -70,6 +71,9 @@ type Subscription struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 	CreatedBy string            `json:"created_by"`
 	UpdatedBy string            `json:"updated_by"`
+
+	// for v1 api cases
+	ReceiversRelation []subscriptionreceiver.Relation `json:"receivers_relation"`
 }
 
 func (s Subscription) ReceiversAsMap() map[uint64]Receiver {

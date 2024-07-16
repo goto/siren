@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/goto/siren/core/silence"
+	"github.com/goto/siren/internal/api"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,7 +18,7 @@ func (s *GRPCServer) CreateSilence(ctx context.Context, req *sirenv1beta1.Create
 		TargetExpression: req.GetTargetExpression().AsMap(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.CreateSilenceResponse{
@@ -33,14 +34,14 @@ func (s *GRPCServer) ListSilences(ctx context.Context, req *sirenv1beta1.ListSil
 		SubscriptionMatch: req.GetSubscriptionMatch(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	var silencesProto []*sirenv1beta1.Silence
 	for _, si := range silences {
 		targetExpression, err := structpb.NewStruct(si.TargetExpression)
 		if err != nil {
-			return nil, s.generateRPCErr(err)
+			return nil, api.GenerateRPCErr(s.logger, err)
 		}
 
 		silencesProto = append(silencesProto, &sirenv1beta1.Silence{
@@ -62,12 +63,12 @@ func (s *GRPCServer) ListSilences(ctx context.Context, req *sirenv1beta1.ListSil
 func (s *GRPCServer) GetSilence(ctx context.Context, req *sirenv1beta1.GetSilenceRequest) (*sirenv1beta1.GetSilenceResponse, error) {
 	sil, err := s.silenceService.Get(ctx, req.GetId())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	targetExpression, err := structpb.NewStruct(sil.TargetExpression)
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.GetSilenceResponse{
@@ -85,7 +86,7 @@ func (s *GRPCServer) GetSilence(ctx context.Context, req *sirenv1beta1.GetSilenc
 
 func (s *GRPCServer) ExpireSilence(ctx context.Context, req *sirenv1beta1.ExpireSilenceRequest) (*sirenv1beta1.ExpireSilenceResponse, error) {
 	if err := s.silenceService.Delete(ctx, req.GetId()); err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.ExpireSilenceResponse{}, nil

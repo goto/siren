@@ -28,7 +28,6 @@ type Dispatcher interface {
 }
 
 type SubscriptionService interface {
-	MatchByLabels(ctx context.Context, namespaceID uint64, labels map[string]string) ([]subscription.Subscription, error)
 	MatchByLabelsV2(ctx context.Context, namespaceID uint64, labels map[string]string) ([]subscription.ReceiverView, error)
 }
 

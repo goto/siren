@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/goto/siren/core/alert"
+	"github.com/goto/siren/internal/api"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -18,7 +19,7 @@ func (s *GRPCServer) ListAlerts(ctx context.Context, req *sirenv1beta1.ListAlert
 		// SilenceID:    req.GetSilenced(),
 	})
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	items := []*sirenv1beta1.Alert{}
@@ -44,7 +45,7 @@ func (s *GRPCServer) ListAlerts(ctx context.Context, req *sirenv1beta1.ListAlert
 func (s *GRPCServer) CreateAlerts(ctx context.Context, req *sirenv1beta1.CreateAlertsRequest) (*sirenv1beta1.CreateAlertsResponse, error) {
 	items, err := s.createAlerts(ctx, req.GetProviderType(), req.GetProviderId(), 0, req.GetBody().AsMap())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.CreateAlertsResponse{
@@ -54,10 +55,10 @@ func (s *GRPCServer) CreateAlerts(ctx context.Context, req *sirenv1beta1.CreateA
 
 func (s *GRPCServer) CreateAlertsWithNamespace(ctx context.Context, req *sirenv1beta1.CreateAlertsWithNamespaceRequest) (*sirenv1beta1.CreateAlertsWithNamespaceResponse, error) {
 	var namespaceID uint64 = 0
-	if !s.cfg.useGlobalSubscription {
+	if !s.cfg.UseGlobalSubscription {
 		namespaceID = req.GetNamespaceId()
 	}
-	if s.cfg.withDebugRequest {
+	if s.cfg.WithDebugRequest {
 		reqJSON, err := protojson.Marshal(req)
 		if err != nil {
 			s.logger.Debug("cannot marshal CreateAlertsWithNamespace req to json", "err", err.Error())
@@ -66,7 +67,7 @@ func (s *GRPCServer) CreateAlertsWithNamespace(ctx context.Context, req *sirenv1
 	}
 	items, err := s.createAlerts(ctx, req.GetProviderType(), req.GetProviderId(), namespaceID, req.GetBody().AsMap())
 	if err != nil {
-		return nil, s.generateRPCErr(err)
+		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
 	return &sirenv1beta1.CreateAlertsWithNamespaceResponse{

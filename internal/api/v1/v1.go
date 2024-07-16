@@ -1,10 +1,10 @@
-package v1beta1
+package v1
 
 import (
 	"github.com/goto/salt/log"
 
 	"github.com/goto/siren/internal/api"
-	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
+	sirenv1 "github.com/goto/siren/proto/gotocompany/siren/v1"
 )
 
 // GRPCServerOption provides ability to configure the grpc initialization
@@ -23,10 +23,10 @@ func WithDebugRequest(debugRequest bool) GRPCServerOption {
 }
 
 type GRPCServer struct {
-	logger  log.Logger
-	cfg     api.Config
-	headers api.HeadersConfig
-	sirenv1beta1.UnimplementedSirenServiceServer
+	sirenv1.UnimplementedSirenServiceServer
+	logger                      log.Logger
+	cfg                         api.Config
+	headers                     api.HeadersConfig
 	templateService             api.TemplateService
 	ruleService                 api.RuleService
 	alertService                api.AlertService

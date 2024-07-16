@@ -5,11 +5,21 @@ import (
 
 	"github.com/goto/siren/core/namespace"
 	"github.com/goto/siren/core/receiver"
+	"github.com/goto/siren/core/subscriptionreceiver"
 	"github.com/goto/siren/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 type LogService interface {
 	ListSubscriptionIDsBySilenceID(ctx context.Context, silenceID string) ([]int64, error)
+}
+
+type SubscriptionReceiverService interface {
+	List(context.Context, subscriptionreceiver.Filter) ([]subscriptionreceiver.Relation, error)
+	BulkCreate(context.Context, []subscriptionreceiver.Relation) error
+	BulkUpsert(context.Context, []subscriptionreceiver.Relation) error
+	BulkSoftDelete(context.Context, subscriptionreceiver.DeleteFilter) error
+	BulkDelete(context.Context, subscriptionreceiver.DeleteFilter) error
 }
 
 type NamespaceService interface {
@@ -53,8 +63,15 @@ func NewService(
 	return svc
 }
 
-func (s *Service) List(ctx context.Context, flt Filter) ([]Subscription, error) {
+func (s *Service) rollback(ctx context.Context, err error) error {
+	if rbErr := s.repository.Rollback(ctx, err); rbErr != nil {
+		return rbErr
+	} else {
+		return err
+	}
+}
 
+func (s *Service) ListV2(ctx context.Context, flt Filter) ([]Subscription, error) {
 	if flt.SilenceID != "" {
 		subscriptionIDs, err := s.logService.ListSubscriptionIDsBySilenceID(ctx, flt.SilenceID)
 		if err != nil {
@@ -68,25 +85,126 @@ func (s *Service) List(ctx context.Context, flt Filter) ([]Subscription, error) 
 		return nil, err
 	}
 
+	var subscriptionIDs []uint64
+	for _, sub := range subscriptions {
+		subscriptionIDs = append(subscriptionIDs, sub.ID)
+	}
+
+	subscriptionsReceivers, err := s.subscriptionReceiverService.List(ctx, subscriptionreceiver.Filter{
+		SubscriptionIDs: subscriptionIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		receiversMap = map[uint64][]Receiver{}
+
+		//for v1 api cases
+		subscriptionRecevierRelations = map[uint64][]subscriptionreceiver.Relation{}
+	)
+	for _, subRcv := range subscriptionsReceivers {
+		if len(receiversMap[subRcv.SubscriptionID]) == 0 {
+			rcv := &Receiver{
+				ID: subRcv.ReceiverID,
+			}
+
+			if flt.WithSubscriptionReceiver {
+				rcv.SubscriptionReceiverLabels = subRcv.Labels
+			}
+
+			receiversMap[subRcv.SubscriptionID] = []Receiver{*rcv}
+			subscriptionRecevierRelations[subRcv.SubscriptionID] = []subscriptionreceiver.Relation{subRcv}
+		} else {
+			rcv := &Receiver{
+				ID: subRcv.ReceiverID,
+			}
+
+			if flt.WithSubscriptionReceiver {
+				rcv.SubscriptionReceiverLabels = subRcv.Labels
+			}
+			receiversMap[subRcv.SubscriptionID] = append(receiversMap[subRcv.SubscriptionID], *rcv)
+			subscriptionRecevierRelations[subRcv.SubscriptionID] = append(subscriptionRecevierRelations[subRcv.SubscriptionID], subRcv)
+		}
+	}
+
+	// enrich subscription
+	if len(subscriptions) > 0 {
+		for i := 0; i < len(subscriptions); i++ {
+			subscriptions[i].Receivers = receiversMap[subscriptions[i].ID]
+			subscriptions[i].ReceiversRelation = subscriptionRecevierRelations[subscriptions[i].ID]
+		}
+	}
+
 	return subscriptions, nil
 }
 
-func (s *Service) Create(ctx context.Context, sub *Subscription) error {
+func (s *Service) CreateV2(ctx context.Context, sub *Subscription) error {
+	ctx = s.repository.WithTransaction(ctx)
 	if err := s.repository.Create(ctx, sub); err != nil {
+		var outErr = err
 		if errors.Is(err, ErrDuplicate) {
-			return errors.ErrConflict.WithMsgf(err.Error())
+			outErr = errors.ErrConflict.WithMsgf(err.Error())
 		}
 		if errors.Is(err, ErrRelation) {
-			return errors.ErrNotFound.WithMsgf(err.Error())
+			outErr = errors.ErrNotFound.WithMsgf(err.Error())
 		}
+		return s.rollback(ctx, outErr)
+	}
+
+	//for the future, setting up receiver should be done via its own API
+	// POST subscriptions/{subscription_id}/receivers
+	// consider only creating subscription if no receiver passed
+	if len(sub.Receivers) == 0 {
+		if err := s.repository.Commit(ctx); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	var newReceiverIDs []uint64
+	for _, rcv := range sub.Receivers {
+		newReceiverIDs = append(newReceiverIDs, rcv.ID)
+	}
+
+	receivers, err := s.receiverService.List(ctx, receiver.Filter{
+		ReceiverIDs: newReceiverIDs,
+	})
+	if err != nil {
+		return s.rollback(ctx, err)
+	}
+
+	// errors out if one of the receiver not found
+	if receiversNotFound := s.checkNonExistentReceiver(receivers, newReceiverIDs); len(receiversNotFound) > 0 {
+		outErr := errors.ErrInvalid.WithMsgf("cannot found the receivers: %v", receiversNotFound)
+		return s.rollback(ctx, outErr)
+	}
+
+	var newSubscriptionsReceivers []subscriptionreceiver.Relation
+	for _, rcv := range receivers {
+		newSubscriptionsReceivers = append(newSubscriptionsReceivers, rcv.ToSubscriptionReceiverRelation(sub.ID))
+	}
+
+	if err := s.subscriptionReceiverService.BulkCreate(ctx, newSubscriptionsReceivers); err != nil {
+		var outErr = err
+		if errors.Is(err, ErrDuplicate) {
+			outErr = errors.ErrConflict.WithMsgf(err.Error())
+		}
+		if errors.Is(err, ErrRelation) {
+			outErr = errors.ErrNotFound.WithMsgf(err.Error())
+		}
+		return s.rollback(ctx, outErr)
+	}
+
+	if err := s.repository.Commit(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Service) Get(ctx context.Context, id uint64) (*Subscription, error) {
-	subscription, err := s.repository.Get(ctx, id)
+func (s *Service) GetV2(ctx context.Context, id uint64) (*Subscription, error) {
+	sub, err := s.repository.Get(ctx, id)
 	if err != nil {
 		if errors.As(err, new(NotFoundError)) {
 			return nil, errors.ErrNotFound.WithMsgf(err.Error())
@@ -94,131 +212,187 @@ func (s *Service) Get(ctx context.Context, id uint64) (*Subscription, error) {
 		return nil, err
 	}
 
-	return subscription, nil
-}
-
-func (s *Service) Update(ctx context.Context, sub *Subscription) error {
-	if err := s.repository.Update(ctx, sub); err != nil {
-		if errors.Is(err, ErrDuplicate) {
-			return errors.ErrConflict.WithMsgf(err.Error())
-		}
-		if errors.Is(err, ErrRelation) {
-			return errors.ErrNotFound.WithMsgf(err.Error())
-		}
-		if errors.As(err, new(NotFoundError)) {
-			return errors.ErrNotFound.WithMsgf(err.Error())
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) Delete(ctx context.Context, id uint64) error {
-	if err := s.repository.Delete(ctx, id); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) MatchByLabels(ctx context.Context, namespaceID uint64, notificationLabels map[string]string) ([]Subscription, error) {
-	// fetch all subscriptions by matching labels.
-	subscriptionsByLabels, err := s.repository.List(ctx, Filter{
-		NamespaceID:       namespaceID,
-		NotificationMatch: notificationLabels,
+	subscriptionsReceivers, err := s.subscriptionReceiverService.List(ctx, subscriptionreceiver.Filter{
+		SubscriptionIDs: []uint64{sub.ID},
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if len(subscriptionsByLabels) == 0 {
+	var newReceivers = []Receiver{}
+	for _, subRcv := range subscriptionsReceivers {
+		newReceivers = append(newReceivers, Receiver{
+			ID: subRcv.ReceiverID,
+		})
+	}
+
+	sub.Receivers = newReceivers
+
+	return sub, nil
+}
+
+func (s *Service) checkNonExistentReceiver(sourceOfTruthReceivers []receiver.Receiver, newReceiverIDs []uint64) []uint64 {
+	var (
+		mapSourceOfTruth       = map[uint64]bool{}
+		nonExistentReceiverIDs = []uint64{}
+	)
+	for _, sot := range sourceOfTruthReceivers {
+		mapSourceOfTruth[sot.ID] = true
+	}
+	for _, rcvID := range newReceiverIDs {
+		if _, ok := mapSourceOfTruth[rcvID]; !ok {
+			nonExistentReceiverIDs = append(nonExistentReceiverIDs, rcvID)
+		}
+	}
+	return nonExistentReceiverIDs
+}
+
+func (s *Service) UpdateV2(ctx context.Context, sub *Subscription) error {
+	ctx = s.repository.WithTransaction(ctx)
+	if err := s.repository.Update(ctx, sub); err != nil {
+		var outErr = err
+		if errors.Is(err, ErrDuplicate) {
+			outErr = errors.ErrConflict.WithMsgf(err.Error())
+		}
+		if errors.Is(err, ErrRelation) {
+			outErr = errors.ErrNotFound.WithMsgf(err.Error())
+		}
+		if errors.As(err, new(NotFoundError)) {
+			outErr = errors.ErrNotFound.WithMsgf(err.Error())
+		}
+		return s.rollback(ctx, outErr)
+	}
+
+	//for the future, setting up receiver should be done via its own API
+	// POST subscriptions/{subscription_id}/receivers
+	// consider only creating subscription if no receiver passed
+	if len(sub.Receivers) == 0 {
+		if err := s.repository.Commit(ctx); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	var newReceiverIDs []uint64
+	for _, rcv := range sub.Receivers {
+		newReceiverIDs = append(newReceiverIDs, rcv.ID)
+	}
+
+	receivers, err := s.receiverService.List(ctx, receiver.Filter{
+		ReceiverIDs: newReceiverIDs,
+	})
+	if err != nil {
+		return s.rollback(ctx, err)
+	}
+
+	// errors out if one of the receiver not found
+	if receiversNotFound := s.checkNonExistentReceiver(receivers, newReceiverIDs); len(receiversNotFound) > 0 {
+		outErr := errors.ErrInvalid.WithMsgf("cannot found the receivers: %v", receiversNotFound)
+		return s.rollback(ctx, outErr)
+	}
+
+	var newSubscriptionsReceivers []subscriptionreceiver.Relation
+	for _, rcv := range receivers {
+		newSubscriptionsReceivers = append(newSubscriptionsReceivers, rcv.ToSubscriptionReceiverRelation(sub.ID))
+	}
+
+	existingSubcriptionReceivers, err := s.subscriptionReceiverService.List(ctx, subscriptionreceiver.Filter{
+		SubscriptionIDs: []uint64{sub.ID},
+	})
+	if err != nil {
+		return s.rollback(ctx, err)
+	}
+
+	toUpsert, toDelete := ClassifyReceivers(newSubscriptionsReceivers, existingSubcriptionReceivers)
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	if len(toUpsert) > 0 {
+		g.Go(func() error {
+			return s.subscriptionReceiverService.BulkUpsert(ctx, toUpsert)
+		})
+	}
+	if len(toDelete) > 0 {
+		g.Go(func() error {
+			return s.subscriptionReceiverService.BulkSoftDelete(ctx, subscriptionreceiver.DeleteFilter{
+				Pair: toDelete,
+			})
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return s.rollback(ctx, err)
+	}
+
+	if err := s.repository.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) DeleteV2(ctx context.Context, id uint64) error {
+	ctx = s.repository.WithTransaction(ctx)
+	if err := s.subscriptionReceiverService.BulkDelete(ctx, subscriptionreceiver.DeleteFilter{
+		SubscriptionID: id,
+	}); err != nil {
+		return s.rollback(ctx, err)
+	}
+
+	if err := s.repository.Delete(ctx, id); err != nil {
+		return s.rollback(ctx, err)
+	}
+
+	if err := s.repository.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) MatchByLabelsV2(ctx context.Context, namespaceID uint64, notificationLabels map[string]string) ([]ReceiverView, error) {
+	// fetch all subscriptions by matching labels.
+	receivers, err := s.repository.MatchLabelsFetchReceivers(ctx, Filter{
+		NamespaceID: namespaceID,
+		Match:       notificationLabels,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(receivers) == 0 {
 		return nil, nil
 	}
 
-	receiversMap, err := CreateReceiversMap(ctx, s.receiverService, subscriptionsByLabels)
-	if err != nil {
-		return nil, err
+	for i := 0; i < len(receivers); i++ {
+		transformedConfigs, err := s.receiverService.PostHookDBTransformConfigs(ctx, receivers[i].Type, receivers[i].Configurations)
+		if err != nil {
+			return nil, err
+		}
+		receivers[i].Configurations = transformedConfigs
 	}
 
-	subscriptionsByLabels, err = AssignReceivers(receiversMap, subscriptionsByLabels)
-	if err != nil {
-		return nil, err
-	}
-
-	return subscriptionsByLabels, nil
+	return receivers, nil
 }
 
-func CreateReceiversMap(ctx context.Context, receiverService ReceiverService, subscriptions []Subscription) (map[uint64]*receiver.Receiver, error) {
-	receiversMap := map[uint64]*receiver.Receiver{}
-	for _, subs := range subscriptions {
-		for _, rcv := range subs.Receivers {
-			if rcv.ID != 0 {
-				receiversMap[rcv.ID] = nil
-			}
+// ClassifyReceivers compare existing and new receivers of a subscription
+func ClassifyReceivers(newReceiver []subscriptionreceiver.Relation, existingReceiver []subscriptionreceiver.Relation) (toUpsert []subscriptionreceiver.Relation, toDelete []subscriptionreceiver.Relation) {
+	var newReceiverMap = map[uint64]subscriptionreceiver.Relation{}
+	for _, rcv := range newReceiver {
+		newReceiverMap[rcv.ReceiverID] = rcv
+	}
+
+	var existingReceiverMap = map[uint64]subscriptionreceiver.Relation{}
+	for _, rcv := range existingReceiver {
+		existingReceiverMap[rcv.ReceiverID] = rcv
+	}
+
+	for _, newRcv := range newReceiverMap {
+		toUpsert = append(toUpsert, newRcv)
+	}
+
+	for existing, existingRcv := range existingReceiverMap {
+		if _, ok := newReceiverMap[existing]; !ok {
+			toDelete = append(toDelete, existingRcv)
 		}
 	}
-
-	// empty receivers map
-	if len(receiversMap) == 0 {
-		return nil, errors.New("no receivers found in subscription")
-	}
-
-	listOfReceiverIDs := []uint64{}
-	for k := range receiversMap {
-		listOfReceiverIDs = append(listOfReceiverIDs, k)
-	}
-
-	filteredReceivers, err := receiverService.List(ctx, receiver.Filter{
-		ReceiverIDs: listOfReceiverIDs,
-		Expanded:    true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	for i, rcv := range filteredReceivers {
-		receiversMap[rcv.ID] = &filteredReceivers[i]
-	}
-
-	nilReceivers := []uint64{}
-	for id, rcv := range receiversMap {
-		if rcv == nil {
-			nilReceivers = append(nilReceivers, id)
-			continue
-		}
-	}
-
-	if len(nilReceivers) > 0 {
-		return nil, errors.ErrInvalid.WithMsgf("receiver id %v don't exist", nilReceivers)
-	}
-
-	return receiversMap, nil
-}
-
-func AssignReceivers(receiversMap map[uint64]*receiver.Receiver, subscriptions []Subscription) ([]Subscription, error) {
-	for is := range subscriptions {
-		for ir, subsRcv := range subscriptions[is].Receivers {
-			if mappedRcv := receiversMap[subsRcv.ID]; mappedRcv == nil {
-				return nil, errors.ErrInvalid.WithMsgf("receiver id %d not found", subsRcv.ID)
-			}
-			mergedConfigMap := MergeConfigsMap(subsRcv.Configuration, receiversMap[subsRcv.ID].Configurations)
-			subscriptions[is].Receivers[ir].ID = receiversMap[subsRcv.ID].ID
-			subscriptions[is].Receivers[ir].Type = receiversMap[subsRcv.ID].Type
-			subscriptions[is].Receivers[ir].Configuration = mergedConfigMap
-		}
-	}
-
-	return subscriptions, nil
-}
-
-func MergeConfigsMap(subscriptionConfigMap map[string]any, receiverConfigsMap map[string]any) map[string]any {
-	var newConfigMap = make(map[string]any)
-	for k, v := range subscriptionConfigMap {
-		newConfigMap[k] = v
-	}
-	for k, v := range receiverConfigsMap {
-		newConfigMap[k] = v
-	}
-	return newConfigMap
+	return
 }

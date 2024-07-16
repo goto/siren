@@ -8,6 +8,7 @@ info:
 tags:
   - name: SirenService
   - name: ProviderService
+  - name: SirenService
 schemes:
   - http
 consumes:
@@ -740,7 +741,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/ListSubscriptionsResponse'
+            $ref: '#/definitions/v1beta1.ListSubscriptionsResponse'
         default:
           description: An unexpected error response.
           schema:
@@ -1095,6 +1096,36 @@ paths:
                   type: string
       tags:
         - Template
+  /v1/subscriptions:
+    get:
+      summary: List subscriptions
+      operationId: SirenService_ListSubscriptions
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1.ListSubscriptionsResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/Status'
+      parameters:
+        - name: namespace_id
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: silence_id
+          in: query
+          required: false
+          type: string
+        - name: receiver_id
+          in: query
+          required: false
+          type: string
+          format: uint64
+      tags:
+        - Subscription
 definitions:
   AddSubscriptionReceiverResponse:
     type: object
@@ -1336,7 +1367,7 @@ definitions:
     type: object
     properties:
       subscription:
-        $ref: '#/definitions/Subscription'
+        $ref: '#/definitions/v1beta1.Subscription'
   GetTemplateResponse:
     type: object
     properties:
@@ -1413,15 +1444,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/SubscriptionReceiverRelation'
-  ListSubscriptionsResponse:
-    type: object
-    properties:
-      subscriptions:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/Subscription'
+          $ref: '#/definitions/v1beta1.SubscriptionReceiverRelation'
   ListTemplatesResponse:
     type: object
     properties:
@@ -1716,57 +1739,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/Any'
-  Subscription:
-    type: object
-    properties:
-      id:
-        type: string
-        format: uint64
-      urn:
-        type: string
-      namespace:
-        type: string
-        format: uint64
-      receivers:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/ReceiverMetadata'
-      match:
-        type: object
-        additionalProperties:
-          type: string
-      created_at:
-        type: string
-        format: date-time
-      updated_at:
-        type: string
-        format: date-time
-      metadata:
-        type: object
-      created_by:
-        type: string
-      updated_by:
-        type: string
-  SubscriptionReceiverRelation:
-    type: object
-    properties:
-      subscription_id:
-        type: string
-        format: uint64
-      receiver_id:
-        type: string
-        format: uint64
-      labels:
-        type: object
-        additionalProperties:
-          type: string
-      created_at:
-        type: string
-        format: date-time
-      updated_at:
-        type: string
-        format: date-time
   SyncRuntimeConfigResponse:
     type: object
     properties:
@@ -1920,3 +1892,121 @@ definitions:
         type: string
       description:
         type: string
+  v1beta1.ListSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1beta1.Subscription'
+  v1beta1.Subscription:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+      urn:
+        type: string
+      namespace:
+        type: string
+        format: uint64
+      receivers:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ReceiverMetadata'
+      match:
+        type: object
+        additionalProperties:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+      metadata:
+        type: object
+      created_by:
+        type: string
+      updated_by:
+        type: string
+  v1beta1.SubscriptionReceiverRelation:
+    type: object
+    properties:
+      subscription_id:
+        type: string
+        format: uint64
+      receiver_id:
+        type: string
+        format: uint64
+      labels:
+        type: object
+        additionalProperties:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+  v1.ListSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1.Subscription'
+  v1.Subscription:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+      urn:
+        type: string
+      namespace:
+        type: string
+        format: uint64
+      receivers_relation:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1.SubscriptionReceiverRelation'
+      match:
+        type: object
+        additionalProperties:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+      metadata:
+        type: object
+      created_by:
+        type: string
+      updated_by:
+        type: string
+  v1.SubscriptionReceiverRelation:
+    type: object
+    properties:
+      subscription_id:
+        type: string
+        format: uint64
+      receiver_id:
+        type: string
+        format: uint64
+      labels:
+        type: object
+        additionalProperties:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time

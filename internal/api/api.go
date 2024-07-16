@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/core/alert"
 	"github.com/goto/siren/core/namespace"
 	"github.com/goto/siren/core/notification"
@@ -14,6 +15,9 @@ import (
 	"github.com/goto/siren/core/subscription"
 	"github.com/goto/siren/core/subscriptionreceiver"
 	"github.com/goto/siren/core/template"
+	"github.com/goto/siren/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AlertService interface {
@@ -51,12 +55,6 @@ type RuleService interface {
 }
 
 type SubscriptionService interface {
-	List(context.Context, subscription.Filter) ([]subscription.Subscription, error)
-	Create(context.Context, *subscription.Subscription) error
-	Get(context.Context, uint64) (*subscription.Subscription, error)
-	Update(context.Context, *subscription.Subscription) error
-	Delete(context.Context, uint64) error
-
 	ListV2(context.Context, subscription.Filter) ([]subscription.Subscription, error)
 	CreateV2(context.Context, *subscription.Subscription) error
 	GetV2(context.Context, uint64) (*subscription.Subscription, error)
@@ -106,4 +104,29 @@ type Deps struct {
 	SubscriptionReceiverService SubscriptionReceiverService
 	NotificationService         NotificationService
 	SilenceService              SilenceService
+}
+
+func GenerateRPCErr(logger log.Logger, e error) error {
+	var err = errors.E(e)
+
+	var code codes.Code
+	switch {
+	case errors.Is(err, errors.ErrNotFound):
+		code = codes.NotFound
+
+	case errors.Is(err, errors.ErrConflict):
+		code = codes.AlreadyExists
+
+	case errors.Is(err, errors.ErrInvalid):
+		code = codes.InvalidArgument
+
+	default:
+		// TODO This will create 2 logs, grpc log and
+		// the error detail (Message & Cause) log
+		// there might be a better approach to solve this
+		code = codes.Internal
+		logger.Error(errors.Verbose(err).Error())
+	}
+
+	return status.Error(code, err.Error())
 }

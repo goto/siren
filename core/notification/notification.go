@@ -81,11 +81,9 @@ func (n Notification) Validate(routerKind string) error {
 }
 
 func (n Notification) MetaMessage(receiverView subscription.ReceiverView) MetaMessage {
-	return MetaMessage{
+	m := MetaMessage{
 		ReceiverID:       receiverView.ID,
-		SubscriptionIDs:  []uint64{receiverView.SubscriptionID},
 		ReceiverType:     receiverView.Type,
-		NotificationIDs:  []string{n.ID},
 		NotificationType: n.Type,
 		ReceiverConfigs:  receiverView.Configurations,
 		Data:             n.Data,
@@ -93,4 +91,14 @@ func (n Notification) MetaMessage(receiverView subscription.ReceiverView) MetaMe
 		Template:         n.Template,
 		Labels:           n.Labels,
 	}
+
+	if receiverView.SubscriptionID != 0 {
+		m.SubscriptionIDs = []uint64{receiverView.SubscriptionID}
+	}
+
+	if n.ID != "" {
+		m.NotificationIDs = []string{n.ID}
+	}
+
+	return m
 }

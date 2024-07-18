@@ -77,6 +77,9 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 		},
 	})
 	if err != nil {
+		if errors.Is(err, notification.ErrNoMessage) {
+			return nil, api.GenerateRPCErr(s.logger, errors.ErrInvalid.WithMsgf(err.Error()))
+		}
 		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 
@@ -137,6 +140,9 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 
 	notificationIDs, err := s.notificationService.Dispatch(ctx, notifications)
 	if err != nil {
+		if errors.Is(err, notification.ErrNoMessage) {
+			return nil, api.GenerateRPCErr(s.logger, errors.ErrInvalid.WithMsgf(err.Error()))
+		}
 		return nil, api.GenerateRPCErr(s.logger, err)
 	}
 

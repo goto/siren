@@ -46,6 +46,15 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 			errString: "rpc error: code = Internal desc = some unexpected error occurred",
 		},
 		{
+			name:           "should return invalid error if post notification return err no message",
+			idempotencyKey: "test",
+			setup: func(ns *mocks.NotificationService) {
+				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
+				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return(nil, notification.ErrNoMessage)
+			},
+			errString: "rpc error: code = InvalidArgument desc = no message sent, probably because not matching any subscription or receiver",
+		},
+		{
 			name:           "should return success if request is idempotent",
 			idempotencyKey: "test",
 			setup: func(ns *mocks.NotificationService) {

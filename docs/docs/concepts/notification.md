@@ -1,6 +1,6 @@
 # Notification
 
-Notification is one of main features in Siren. Siren capables to send notification to various receivers (Slack, PagerDuty). Notification in Siren could be sent directly to a receiver or user could subscribe notifications by providing key-value label matchers. For the latter, Siren able to routes notification directly to receivers or to specific receivers by matching notification key-value labels with the provided label matchers.
+Notification is the main feature in Siren. Siren capables to send notification to various receivers (Slack, PagerDuty). Notification in Siren could be sent directly to a receiver or user could subscribe notifications by providing key-value label matchers. For the latter, Siren able to routes notification directly to receivers or to specific receivers by matching notification key-value labels with the provided label matchers.
 
 Sending bulk notifications is also supported in Siren. But this mode is only supporting subscription-based routing.
 
@@ -8,21 +8,25 @@ Below is how the notification is implemented in Siren
 
 ![Notification in Siren](../../static/img/siren_notification.svg)
 
-There are multiple entry points in Siren: 
-- Alerts webhook API
-    - Use by provider to send alerts
-- `POST /notifications` API
+Apart from ![Alert Webhook](./alert.md), there are another entry points in Siren:
+- ![POST /notifications API](../apis/siren-service-post-notification.api.mdx)
     - To send a single notification through receiver based routing or subscription based routing
-- `POST /bulk-notifications` API
+- ![POST /bulk-notifications API](../apis/siren-service-post-bulk-notifications.api.mdx)
     - To send bulk notifications through subscription based routing
 
-Alerts that are being sent by provider will be translated to a `Notification` by `Notification Service`. From this point, the notification is being dispatched by a `Notification Dispatcher` according to the strategy that it took (Bulk or Single Notification).
+From this point, the notification is being dispatched by a `Notification Dispatcher` according to the strategy that it took (Bulk or Single Notification).
 
-For bulk notifications, notifications are evaluated by the subscription and meta messages will be generated. The generated meta messages could be grouped by a certain configuration. At the end, the messages will be enqueued and handled to be sent to the external notification services (e.g. Slack, Pagerduty, etc).
+The dispatched notification will be evaluated based on the routing strategy too. If it is receiver based routing, the notification will be routed to the receiver. If it is subscription based routing, the notification will be evaluated by the subscription matcher.
+
+Post this process, the `Meta Messages` will be generated. The generated meta messages could be reduced or grouped by a certain configuration. At the end, the meta messages will be rendered and this process produces the ![Notification Message](#notification-message) that will be enqueued and handled to be sent to the external notification services (e.g. Slack, Pagerduty, etc).
+
+## Notification Meta Message
+During dispatching Notification, the routed Notification will generate some `Meta Messages` from a single Notification. This is non-rendered version and the prototype of a ![Notification Message](#notification-message).
+This model is useful for Siren to manipulate the meta messages like grouping or other transformation within the `Reducer` step.
 
 ## Notification Message
 
-Each receiver might expect different payload. User needs to pass notification message payload in the same format as what receiver (notification vendor, e.g. slack, pagerduty, etc) expected. All message payload contracts could be found under [receivers](../receivers/slack.md).
+This is the rendered version of a ![Notification Meta Message](#notification-meta-message). In this state, the message would contain all information in the format that the receiver recognize or support. Each receiver might expect different payload. User needs to pass notification message payload in the same format as what receiver (notification vendor, e.g. slack, pagerduty, etc) expected. All message payload contracts could be found under [receivers](../receivers/slack.md).
 
 ### Templating Notification Message Payload
 

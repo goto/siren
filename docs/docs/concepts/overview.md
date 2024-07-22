@@ -34,7 +34,7 @@ Let's have a look at the major components:
 
 ### **Provider**
 
-A service/platform that does monitoring, observability, and alerting (Cortex, Influx). Provider is expected to send alerts information to siren via siren's ![Webhook API](../apis/siren-service-create-alerts.api.mdx) everytime alerts are triggered. Siren does alerting rules management and synchronize the rules with the provider.
+A service/platform that does monitoring, observability, and alerting (Cortex, Influx). Provider is expected to send alerts information to siren via siren's [Webhook API](../apis/siren-service-create-alerts.api.mdx) everytime alerts are triggered. Siren does alerting rules management and synchronize the rules with the provider.
 
 ### **Upstream Services** 
 

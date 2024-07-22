@@ -8,10 +8,10 @@ Below is how the notification is implemented in Siren
 
 ![Notification in Siren](../../static/img/siren_notification.svg)
 
-Apart from ![Alert Webhook](./alert.md), there are another entry points in Siren:
-- ![POST /notifications API](../apis/siren-service-post-notification.api.mdx)
+Apart from [Alert Webhook](./alert.md), there are another entry points in Siren:
+- [POST /notifications API](../apis/siren-service-post-notification.api.mdx)
     - To send a single notification through receiver based routing or subscription based routing
-- ![POST /bulk-notifications API](../apis/siren-service-post-bulk-notifications.api.mdx)
+- [POST /bulk-notifications API](../apis/siren-service-post-bulk-notifications.api.mdx)
     - To send bulk notifications through subscription based routing
 
 From this point, the notification is being dispatched by a `Notification Dispatcher` according to the strategy that it took (Bulk or Single Notification).

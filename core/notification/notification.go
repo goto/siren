@@ -90,6 +90,7 @@ func (n Notification) MetaMessage(receiverView subscription.ReceiverView) MetaMe
 		ValidDuration:    n.ValidDuration,
 		Template:         n.Template,
 		Labels:           n.Labels,
+		UniqueKey:        n.UniqueKey,
 	}
 
 	if receiverView.SubscriptionID != 0 {

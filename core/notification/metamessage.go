@@ -16,4 +16,5 @@ type MetaMessage struct {
 	Template         string
 	Labels           map[string]string
 	MergedLabels     map[string][]string
+	UniqueKey        string
 }

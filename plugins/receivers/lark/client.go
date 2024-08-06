@@ -21,7 +21,7 @@ const (
 	larkPathOAuth      = "/open-apis/auth/v3/tenant_access_token/internal/"
 )
 
-type GoSlackCaller interface {
+type GoLarkCaller interface {
 	GetConversationsForUserContext(ctx context.Context, params *goslack.GetConversationsForUserParameters) (channels []goslack.Channel, nextCursor string, err error)
 	GetUserByEmailContext(ctx context.Context, email string) (*goslack.User, error)
 	SendMessageContext(ctx context.Context, channel string, options ...goslack.MsgOption) (string, string, string, error)
@@ -216,7 +216,7 @@ func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Me
 	return nil
 }
 
-func (c *Client) sendMessageContext(ctx context.Context, gsc GoSlackCaller, channelID string, msgOpts ...goslack.MsgOption) error {
+func (c *Client) sendMessageContext(ctx context.Context, gsc GoLarkCaller, channelID string, msgOpts ...goslack.MsgOption) error {
 	_, _, _, err := gsc.SendMessageContext(
 		ctx,
 		channelID,
@@ -246,7 +246,7 @@ func (c *Client) checkSlackErrorRetryable(err error) error {
 	return err
 }
 
-func (c *Client) getJoinedChannelsList(ctx context.Context, gsc GoSlackCaller) ([]goslack.Channel, error) {
+func (c *Client) getJoinedChannelsList(ctx context.Context, gsc GoLarkCaller) ([]goslack.Channel, error) {
 	channelList := make([]goslack.Channel, 0)
 	curr := ""
 	for {

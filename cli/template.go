@@ -404,8 +404,7 @@ func uploadTemplateCmd(cmdxConfig *cmdx.Config) *cobra.Command {
 			var yamlObject struct {
 				Type string `yaml:"type"`
 			}
-			err = yaml.Unmarshal(yamlFile, &yamlObject)
-			if err != nil {
+			if err = yaml.Unmarshal(yamlFile, &yamlObject); err != nil {
 				return err
 			}
 
@@ -495,7 +494,7 @@ func UploadTemplate(client sirenv1beta1.SirenServiceClient, yamlFile []byte) (ui
 		})
 
 		if err != nil {
-			return 0, fmt.Errorf("failed to update rule of ID: %d\tname: %s", associatedRule.Id, associatedRule.Name)
+			return 0, fmt.Errorf("failed to update rule of ID: %d\tname: %s\terror: %v", associatedRule.Id, associatedRule.Name, err)
 		}
 		fmt.Println("successfully updated rule of ID: ", associatedRule.Id, "\tname: ", associatedRule.Name)
 	}

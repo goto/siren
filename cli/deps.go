@@ -24,6 +24,7 @@ import (
 	"github.com/goto/siren/plugins/providers"
 	"github.com/goto/siren/plugins/receivers/file"
 	"github.com/goto/siren/plugins/receivers/httpreceiver"
+	"github.com/goto/siren/plugins/receivers/lark"
 	"github.com/goto/siren/plugins/receivers/pagerduty"
 	"github.com/goto/siren/plugins/receivers/slack"
 	"github.com/goto/siren/plugins/receivers/slackchannel"
@@ -106,6 +107,7 @@ func InitDeps(
 
 	// plugin receiver services
 	slackPluginService := slack.NewPluginService(cfg.Receivers.Slack, encryptor)
+	larkPluginService := lark.NewPluginService(cfg.Receivers.Lark, encryptor)
 	slackChannelPluginService := slackchannel.NewPluginService(cfg.Receivers.Slack, encryptor)
 	pagerDutyPluginService := pagerduty.NewPluginService(cfg.Receivers.Pagerduty)
 	httpreceiverPluginService := httpreceiver.NewPluginService(logger, cfg.Receivers.HTTPReceiver)
@@ -116,6 +118,7 @@ func InitDeps(
 		receiverRepository,
 		map[string]receiver.ConfigResolver{
 			receiver.TypeSlack:        slackPluginService,
+			receiver.TypeLark:         larkPluginService,
 			receiver.TypeSlackChannel: slackChannelPluginService,
 			receiver.TypeHTTP:         httpreceiverPluginService,
 			receiver.TypePagerDuty:    pagerDutyPluginService,
@@ -156,6 +159,7 @@ func InitDeps(
 
 	notifierRegistry := map[string]notification.Notifier{
 		receiver.TypeSlack:        slackPluginService,
+		receiver.TypeLark:         larkPluginService,
 		receiver.TypeSlackChannel: slackChannelPluginService,
 		receiver.TypePagerDuty:    pagerDutyPluginService,
 		receiver.TypeHTTP:         httpreceiverPluginService,

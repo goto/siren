@@ -2,18 +2,15 @@ package lark
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
 	"github.com/goto/siren/pkg/retry"
-	"github.com/goto/siren/pkg/secret"
-	goslack "github.com/slack-go/slack"
+	lark "github.com/larksuite/oapi-sdk-go/v3"
+	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
+	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
+	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 )
 
 const (
@@ -21,28 +18,9 @@ const (
 	larkPathOAuth      = "/open-apis/auth/v3/tenant_access_token/internal/"
 )
 
-type GoLarkCaller interface {
-	GetConversationsForUserContext(ctx context.Context, params *goslack.GetConversationsForUserParameters) (channels []goslack.Channel, nextCursor string, err error)
-	GetUserByEmailContext(ctx context.Context, email string) (*goslack.User, error)
-	SendMessageContext(ctx context.Context, channel string, options ...goslack.MsgOption) (string, string, string, error)
-}
-
-type codeExchangeHTTPResponse struct {
-	AccessToken secret.MaskableString `json:"access_token"`
-	Team        struct {
-		Name string `json:"name"`
-	} `json:"team"`
-	Ok bool `json:"ok"`
-}
-
 type Channel struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-}
-
-type Credential struct {
-	AccessToken secret.MaskableString
-	TeamName    string
 }
 
 type ClientOption func(*Client)
@@ -68,8 +46,8 @@ type Client struct {
 	retrier    retry.Runner
 }
 
-// NewClient is a constructor to create slack client.
-// this version uses go-slack client and this construction wraps the client.
+// NewClient is a constructor to create lark client.
+// this version uses lark v3 SDK.
 func NewClient(cfg AppConfig, opts ...ClientOption) *Client {
 	c := &Client{
 		cfg: cfg,
@@ -92,53 +70,11 @@ func NewClient(cfg AppConfig, opts ...ClientOption) *Client {
 	return c
 }
 
-// ExchangeAuth submits client ID, client secret, and auth code and retrieve acces token and team name
-func (c *Client) ExchangeAuth(ctx context.Context, authCode, clientID, clientSecret string) (Credential, error) {
-	data := url.Values{}
-	data.Set("code", authCode)
-	data.Set("client_id", clientID)
-	data.Set("client_secret", clientSecret)
-
-	response := codeExchangeHTTPResponse{}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.cfg.APIHost+larkPathOAuth, strings.NewReader(data.Encode()))
-	if err != nil {
-		return Credential{}, fmt.Errorf("failed to create request body: %w", err)
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := c.httpClient.HTTP().Do(req)
-	if err != nil {
-		return Credential{}, fmt.Errorf("failure in http call: %w", err)
-	}
-	defer resp.Body.Close()
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Credential{}, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	err = json.Unmarshal(bodyBytes, &response)
-	if err != nil {
-		return Credential{}, fmt.Errorf("failed to unmarshal response body: %w", err)
-	}
-	if !response.Ok {
-		return Credential{}, errors.New("slack oauth call failed")
-	}
-
-	return Credential{
-		AccessToken: response.AccessToken,
-		TeamName:    response.Team.Name,
-	}, nil
-}
-
 // GetWorkspaceChannels fetches list of joined channel of a client
-func (c *Client) GetWorkspaceChannels(ctx context.Context, token secret.MaskableString) ([]Channel, error) {
-	gsc := goslack.New(
-		token.UnmaskedString(),
-		goslack.OptionAPIURL(c.cfg.APIHost),
-		goslack.OptionHTTPClient(c.httpClient.HTTP()),
-	)
+func (c *Client) GetWorkspaceChannels(ctx context.Context, clientID, clientSecret string) ([]Channel, error) {
+	var client = lark.NewClient(clientID, clientSecret)
 
-	joinedChannelList, err := c.getJoinedChannelsList(ctx, gsc)
+	joinedChannelList, err := c.getJoinedChannelsList(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch joined channel list: %w", err)
 	}
@@ -146,14 +82,15 @@ func (c *Client) GetWorkspaceChannels(ctx context.Context, token secret.Maskable
 	result := make([]Channel, 0)
 	for _, c := range joinedChannelList {
 		result = append(result, Channel{
-			ID:   c.ID,
-			Name: c.Name,
+			ID:   *c.ChatId,
+			Name: *c.Name,
 		})
 	}
 	return result, nil
 }
 
 func (c *Client) Notify(ctx context.Context, conf NotificationConfig, message Message) error {
+	//message.Channel = "friday siren"
 	if c.retrier != nil {
 		if err := c.retrier.Run(ctx, func(ctx context.Context) error {
 			return c.notify(ctx, conf, message)
@@ -164,21 +101,17 @@ func (c *Client) Notify(ctx context.Context, conf NotificationConfig, message Me
 	return c.notify(ctx, conf, message)
 }
 
-// Notify sends message to a specific slack channel
+// Notify sends message to a specific lark channel
 func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Message) error {
 
-	gsc := goslack.New(
-		conf.ReceiverConfig.Token.UnmaskedString(),
-		goslack.OptionAPIURL(c.cfg.APIHost),
-		goslack.OptionHTTPClient(c.httpClient.HTTP()),
-	)
+	var client = lark.NewClient(conf.ClientID, conf.ClientSecret)
 
 	var channelID string
 	switch conf.ChannelType {
 	case TypeChannelChannel:
-		joinedChannelList, err := c.getJoinedChannelsList(ctx, gsc)
+		joinedChannelList, err := c.getJoinedChannelsList(ctx, client)
 		if err != nil {
-			if err := c.checkSlackErrorRetryable(err); errors.As(err, new(retry.RetryableError)) {
+			if err := c.checkLarkErrorRetryable(err); errors.As(err, new(retry.RetryableError)) {
 				return err
 			}
 			return fmt.Errorf("failed to fetch joined channel list: %w", err)
@@ -188,26 +121,25 @@ func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Me
 			return fmt.Errorf("app is not part of the channel %q", message.Channel)
 		}
 	case TypeChannelUser:
-		// https://api.slack.com/methods/users.lookupByEmail
-		user, err := gsc.GetUserByEmailContext(ctx, message.Channel)
+		user, err := c.getUserByEmail(ctx, message.Channel, client)
 		if err != nil {
 			if err.Error() == "users_not_found" {
 				return fmt.Errorf("failed to get id for %q", message.Channel)
 			}
-			return c.checkSlackErrorRetryable(err)
+			return c.checkLarkErrorRetryable(err)
 		}
-		channelID = user.ID
+		channelID = user
 	default:
 		return fmt.Errorf("unknown receiver type %q", conf.ChannelType)
 	}
 
-	msgOptions, err := message.BuildGoSlackMessageOptions()
+	msgOptions, err := message.BuildLarkMessage()
 	if err != nil {
 		return err
 	}
 
-	if err := c.sendMessageContext(ctx, gsc, channelID, msgOptions...); err != nil {
-		if err := c.checkSlackErrorRetryable(err); errors.As(err, new(retry.RetryableError)) {
+	if err := c.sendMessageContext(ctx, client, channelID, msgOptions); err != nil {
+		if err := c.checkLarkErrorRetryable(err); errors.As(err, new(retry.RetryableError)) {
 			return err
 		}
 		return fmt.Errorf("failed to send message to %q: %w", message.Channel, err)
@@ -216,62 +148,77 @@ func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Me
 	return nil
 }
 
-func (c *Client) sendMessageContext(ctx context.Context, gsc GoLarkCaller, channelID string, msgOpts ...goslack.MsgOption) error {
-	_, _, _, err := gsc.SendMessageContext(
-		ctx,
-		channelID,
-		msgOpts...,
-	)
+func (c *Client) sendMessageContext(ctx context.Context, client *lark.Client, channelID string, msgOpts string) error {
+	req := larkim.NewCreateMessageReqBuilder().
+		ReceiveIdType(`chat_id`).
+		Body(larkim.NewCreateMessageReqBodyBuilder().
+			ReceiveId(channelID).
+			MsgType(`interactive`).
+			Content(msgOpts).
+			Build()).
+		Build()
+
+	resp, err := client.Im.Message.Create(context.Background(), req)
 	if err != nil {
-		return c.checkSlackErrorRetryable(err)
+		return c.checkLarkErrorRetryable(err)
 	}
+	fmt.Println(larkcore.Prettify(resp.Data))
+
 	return nil
 }
 
-func (c *Client) checkSlackErrorRetryable(err error) error {
-	// if 429 or 5xx do retry
-	var scErr goslack.StatusCodeError
-	isit := errors.As(err, &scErr)
-	if isit {
-		if scErr.Retryable() {
-			return retry.RetryableError{Err: err}
-		}
-	}
-	var rlErr *goslack.RateLimitedError
-	if errors.As(err, &rlErr) {
-		if rlErr.Retryable() {
-			return retry.RetryableError{Err: err}
-		}
-	}
-	return err
+func (c *Client) checkLarkErrorRetryable(err error) error {
+	return retry.RetryableError{Err: err}
 }
 
-func (c *Client) getJoinedChannelsList(ctx context.Context, gsc GoLarkCaller) ([]goslack.Channel, error) {
-	channelList := make([]goslack.Channel, 0)
+func (c *Client) getJoinedChannelsList(ctx context.Context, client *lark.Client) ([]*larkim.ListChat, error) {
+	list := []*larkim.ListChat{}
+
 	curr := ""
 	for {
-		channels, nextCursor, err := gsc.GetConversationsForUserContext(ctx, &goslack.GetConversationsForUserParameters{
-			Types:  []string{"public_channel", "private_channel"},
-			Cursor: curr,
-			Limit:  1000})
+		req := larkim.NewListChatReqBuilder().Limit(1000).PageToken(curr).Build()
+		resp, err := client.Im.Chat.List(context.Background(), req)
 		if err != nil {
-			return channelList, err
+			return list, err
 		}
 
-		channelList = append(channelList, channels...)
-		curr = nextCursor
+		list = append(list, resp.Data.Items...)
+		curr = *resp.Data.PageToken
 		if curr == "" {
 			break
 		}
 	}
-	return channelList, nil
+	return list, nil
 }
 
-func searchChannelId(channels []goslack.Channel, channelName string) string {
+func searchChannelId(channels []*larkim.ListChat, channelName string) string {
 	for _, c := range channels {
-		if c.Name == channelName {
-			return c.ID
+		if *c.Name == channelName {
+			return *c.ChatId
 		}
 	}
 	return ""
+}
+
+func (c *Client) getUserByEmail(ctx context.Context, email string, client *lark.Client) (string, error) {
+
+	req := larkcontact.NewBatchGetIdUserReqBuilder().
+		Body(larkcontact.NewBatchGetIdUserReqBodyBuilder().
+			Emails([]string{email}).
+			IncludeResigned(true).
+			Build()).
+		Build()
+	resp, err := client.Contact.User.BatchGetId(ctx, req)
+	if err != nil {
+		userinfo := resp.Data.UserList[len(resp.Data.UserList)-1]
+		return *userinfo.UserId, nil
+	}
+
+	if !resp.Success() {
+		fmt.Println(resp.Code, resp.Msg, resp.RequestId())
+		return "nil", err
+
+	}
+
+	return "", nil
 }

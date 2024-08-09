@@ -14,7 +14,7 @@ func Init(configFile string) error {
 	defaults.SetDefaults(cfg)
 
 	cfg.DB.Driver = "postgres"
-	cfg.DB.URL = "postgres://postgres:@localhost:5434/postgres?sslmode=disable"
+	cfg.DB.URL = "postgres://postgres:@localhost:5432/siren_development?sslmode=disable"
 
 	if len(cfg.Notification.MessageHandler.ReceiverTypes) == 0 {
 		cfg.Notification.MessageHandler.ReceiverTypes = receiver.SupportedTypes

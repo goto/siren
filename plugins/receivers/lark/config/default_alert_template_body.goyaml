@@ -1,21 +1,21 @@
 {{- define "__alert_severity_prefix_emoji" -}}
   {{if ne .Data.status "firing" -}}
-  :white_check_mark:
+  :CheckMark:
   {{- else if eq .Data.severity "CRITICAL" -}}
-  :fire:
+  :Fire:
   {{- else if eq .Data.severity "WARNING" -}}
-  :warning:
+  :StatusFlashOfInspiration:
   {{- else -}}
-  :question:
+  :WHAT:
   {{- end}}
 {{- end}}
-{{- define "slack.pretext" -}}
+{{- define "lark.pretext" -}}	
   {{- template "__alert_severity_prefix_emoji" . }} ({{ .Data.status | toUpper }}{{ if eq .Data.status "firing" }}:{{ .Data.num_alerts_firing }}{{ end }})
-  {{- if eq .Data.status "resolved" }} ~({{ .Data.severity | toUpper }})~
-  {{- else }} *({{ .Data.severity | toUpper }})*
+  {{- if eq .Data.status "resolved" }} ~~({{ .Data.severity | toUpper }})~~
+  {{- else }} **({{ .Data.severity | toUpper }})**
   {{- end}} {{ if .Data.alert_name }}{{.Data.alert_name}}{{else}}{{.Data.alertname}}{{end}}
 {{- end }}
-{{- define "slack.color" -}}
+{{- define "lark.color" -}}
 {{- if eq .Data.status "firing" -}}
   {{if eq .Data.severity "WARNING" -}}
   warning
@@ -28,27 +28,27 @@
   good
   {{- end}}
 {{- end}}
-{{- define "slack.body"}}
+{{- define "lark.body"}}
 {{- .Data.summary}}
 {{ end}}
-{{- define "slack.dashboard"}}
+{{- define "lark.dashboard"}}
 {{- if .Data.dashboard}}{{.Data.dashboard}}{{else}}{{.Data.defaultDashboard}}{{end}}
 {{- end -}}
-{{- define "slack.runbook"}}
+{{- define "lark.runbook"}}
 {{- if .Data.playbook}}{{.Data.playbook}}{{end}}
 {{- end -}}
 username: "Siren"
-icon_emoji: ":eagle:"
-attachments:
-  - title: ""
-    pretext: "{{template "slack.pretext" . }}"
+icon_emoji: ":Loudspeaker:"
+elements:
+  - title: "title"
+    pretext: "{{template "lark.pretext" . }}"
     text: |
 {{.Data.summary | indent 6}}
-    color: "{{template "slack.color" . }}"
+    color: "{{template "lark.color" . }}"
     actions:
     - type: button
-      text: "Runbook :books:"
-      url: "{{template "slack.runbook" . }}"
+      text: "Runbook :StatusReading:"
+      url: "{{template "lark.runbook" . }}"
     - type: button
-      text: 'Dashboard :bar_chart:'
-      url: "{{template "slack.dashboard" . }}"
+      text: 'Dashboard :GeneralInMeetingBusy:'
+      url: "{{template "lark.dashboard" . }}"

@@ -6,7 +6,6 @@ import (
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
 	"github.com/goto/siren/pkg/retry"
-	"github.com/goto/siren/pkg/secret"
 )
 
 // AppConfig is a config loaded when siren is started
@@ -33,21 +32,23 @@ func (c *LarkCredentialConfig) Validate() error {
 
 // ReceiverConfig is a stored config for a slack receiver
 type ReceiverConfig struct {
-	Token     secret.MaskableString `json:"token" mapstructure:"token"`
-	Workspace string                `json:"workspace" mapstructure:"workspace"`
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
+	AuthCode     string `mapstructure:"auth_code"`
 }
 
 func (c *ReceiverConfig) Validate() error {
-	if c.Token != "" && c.Workspace != "" {
+	if c.ClientID != "" && c.ClientSecret != "" {
 		return nil
 	}
-	return errors.ErrInvalid.WithMsgf("invalid slack receiver config, workspace: %s, token: %s", c.Workspace, c.Token)
+	return errors.ErrInvalid.WithMsgf("invalid lark receiver config, workspace: %s, token: %s", c.ClientID, c.ClientSecret)
 }
 
 func (c *ReceiverConfig) AsMap() map[string]any {
 	return map[string]any{
-		"workspace": c.Workspace,
-		"token":     c.Token,
+		"client_id":     c.ClientID,
+		"client_secret": c.ClientSecret,
+		"auth_code":     c.AuthCode,
 	}
 }
 
@@ -85,10 +86,10 @@ type NotificationConfig struct {
 // channel_name is not mandatory because in NotifyToReceiver flow, channel_name
 // is being passed from the request (not from the config)
 func (c *NotificationConfig) Validate() error {
-	if c.Token != "" && c.Workspace != "" {
+	if c.ClientID != "" && c.ClientSecret != "" {
 		return nil
 	}
-	return fmt.Errorf("invalid slack notification config, workspace: %s, token: %s, channel_name: %s", c.Workspace, c.Token, c.ChannelName)
+	return fmt.Errorf("invalid lark notification config, workspace: %s, token: %s, channel_name: %s", c.ClientSecret, c.ClientID, c.ChannelName)
 }
 
 func (c *NotificationConfig) AsMap() map[string]any {

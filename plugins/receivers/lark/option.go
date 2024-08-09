@@ -22,7 +22,7 @@ func WithRetrier(runner retry.Runner) ServiceOption {
 	}
 }
 
-func WithSlackClient(client LarkCaller) ServiceOption {
+func WithLarkClient(client LarkCaller) ServiceOption {
 	return func(s *PluginService) {
 		s.client = client
 	}

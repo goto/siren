@@ -14,7 +14,7 @@ import (
 )
 
 type ClientConfig struct {
-	Host string `yaml:"host" cmdx:"host" default:"localhost:8080"`
+	Host string `yaml:"host" cmdx:"host" default:"localhost:8084"`
 }
 
 func loadClientConfig(cmd *cobra.Command, cmdxConfig *cmdx.Config) (*ClientConfig, error) {

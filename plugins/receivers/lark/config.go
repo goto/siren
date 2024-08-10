@@ -27,14 +27,13 @@ func (c *LarkCredentialConfig) Validate() error {
 	if c.ClientID != "" && c.ClientSecret != "" && c.AuthCode != "" {
 		return nil
 	}
-	return fmt.Errorf("invalid slack credentials, client_id: %s, client_secret: <secret>, auth_code: <secret>", c.ClientID)
+	return fmt.Errorf("invalid lark credentials, client_id: %s, client_secret: <secret>, auth_code: <secret>", c.ClientID)
 }
 
-// ReceiverConfig is a stored config for a slack receiver
+// ReceiverConfig is a stored config for a lark receiver
 type ReceiverConfig struct {
 	ClientID     string `mapstructure:"client_id"`
 	ClientSecret string `mapstructure:"client_secret"`
-	AuthCode     string `mapstructure:"auth_code"`
 }
 
 func (c *ReceiverConfig) Validate() error {
@@ -48,11 +47,10 @@ func (c *ReceiverConfig) AsMap() map[string]any {
 	return map[string]any{
 		"client_id":     c.ClientID,
 		"client_secret": c.ClientSecret,
-		"auth_code":     c.AuthCode,
 	}
 }
 
-// ReceiverData is a stored data for a slack receiver
+// ReceiverData is a stored data for a lark receiver
 type ReceiverData struct {
 	Channels string `json:"channels" mapstructure:"channels"`
 }
@@ -63,7 +61,7 @@ func (c *ReceiverData) AsMap() map[string]any {
 	}
 }
 
-// SubscriptionConfig is a stored config for a subscription of a slack receiver
+// SubscriptionConfig is a stored config for a subscription of a lark receiver
 type SubscriptionConfig struct {
 	ChannelName string `json:"channel_name" mapstructure:"channel_name"`
 	ChannelType string `json:"channel_type" mapstructure:"channel_type"`

@@ -18,14 +18,14 @@
 {{- define "lark.color" -}}
 {{- if eq .Data.status "firing" -}}
   {{if eq .Data.severity "WARNING" -}}
-  warning
+  yellow
   {{- else if eq .Data.severity "CRITICAL" -}}
-  danger
+  red
   {{- else -}}
-  #439FE0
+  blue
   {{- end -}}
   {{else -}}
-  good
+  green
   {{- end}}
 {{- end}}
 {{- define "lark.body"}}
@@ -39,16 +39,18 @@
 {{- end -}}
 username: "Siren"
 icon_emoji: ":Loudspeaker:"
+templatecolor: "{{template "lark.color" . }}"
 elements:
   - title: "title"
     pretext: "{{template "lark.pretext" . }}"
     text: |
 {{.Data.summary | indent 6}}
-    color: "{{template "lark.color" . }}"
     actions:
-    - type: button
-      text: "Runbook :StatusReading:"
+    - tag: button
+      type: primary
+      text: {"tag":"lark_md", "content":"Runbook :StatusReading:"}
       url: "{{template "lark.runbook" . }}"
-    - type: button
-      text: 'Dashboard :GeneralInMeetingBusy:'
+    - tag: button
+      type: primary
+      text: {"tag":"lark_md", "content":"Dashboard :GeneralInMeetingBusy:"}
       url: "{{template "lark.dashboard" . }}"

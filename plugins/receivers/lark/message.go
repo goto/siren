@@ -3,11 +3,10 @@ package lark
 import (
 	"encoding/json"
 	"fmt"
-
-	goslack "github.com/slack-go/slack"
 )
 
 type Message struct {
+	Color     string        `yaml:"templatecolor,omitempty" json:"templatecolor,omitempty"  mapstructure:"templatecolor"`
 	Channel   string        `yaml:"channel,omitempty" json:"channel,omitempty"  mapstructure:"channel"`
 	Text      string        `yaml:"text,omitempty" json:"text,omitempty"  mapstructure:"text"`
 	Username  string        `yaml:"username,omitempty" json:"username,omitempty"  mapstructure:"username"`
@@ -23,8 +22,8 @@ func (m Message) BuildLarkMessage() (string, error) {
 		Elements: []Element{},
 		Header:   Header{},
 	}
-	message.Header.Template = "green" // Pass from template
-	message.Header.Title = Text{Content: m.Text + "  text", Tag: "lark_md"}
+	message.Header.Template = m.Color
+	message.Header.Title = Text{Content: m.Text, Tag: "lark_md"}
 	message.Elements = append(message.Elements, Element{Tag: "div", Text: Text{Content: m.IconEmoji, Tag: "lark_md"}})
 
 	for _, a := range m.Elements {
@@ -36,7 +35,7 @@ func (m Message) BuildLarkMessage() (string, error) {
 		message.Elements = append(message.Elements, Element{Tag: "div", Text: Text{Content: element.Text, Tag: "lark_md"}})
 
 		for _, action := range element.Actions {
-			message.Elements = append(message.Elements, Element{Tag: "action", Actions: []Action{{Tag: "button", URL: action.URL, Type: "primary", Text: Text{Tag: "lark_md", Content: action.Text}}}}) // actions
+			message.Elements = append(message.Elements, Element{Tag: "action", Actions: []Action{{Tag: action.Tag, URL: action.URL, Type: action.Type, Text: Text{Tag: action.Text.Tag, Content: action.Text.Content}}}}) // actions
 		}
 	}
 	jsonData, err := json.Marshal(message)
@@ -47,30 +46,25 @@ func (m Message) BuildLarkMessage() (string, error) {
 	return string(jsonData), nil
 }
 
-type CardElement map[string]any
+type CardElement struct {
+	Title   string   `json:"title,omitempty"`
+	Pretext string   `json:"pretext,omitempty"`
+	Text    string   `json:"text,omitempty"`
+	Actions []Action `json:"actions,omitempty"`
+}
 
-func (ma CardElement) ToLark() (*goslack.Attachment, error) {
+func (ma CardElement) ToLark() (*CardElement, error) {
 	gaBlob, err := json.Marshal(ma)
 	if err != nil {
 		return nil, err
 	}
 
-	ga := &goslack.Attachment{}
+	ga := &CardElement{}
 	if err := json.Unmarshal(gaBlob, &ga); err != nil {
 		return nil, err
 	}
 
 	return ga, nil
-}
-
-type MessageBlock map[string]any
-
-func (mb MessageBlock) BlockType() goslack.MessageBlockType {
-	blockType, ok := mb["type"].(goslack.MessageBlockType)
-	if !ok {
-		return ""
-	}
-	return blockType
 }
 
 type MessageCard struct {

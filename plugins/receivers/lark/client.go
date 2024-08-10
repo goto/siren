@@ -25,7 +25,7 @@ type Channel struct {
 
 type ClientOption func(*Client)
 
-// ClientWithHTTPClient assigns custom http client when creating a slack client
+// ClientWithHTTPClient assigns custom http client when creating a lark client
 func ClientWithHTTPClient(httpClient *httpclient.Client) ClientOption {
 	return func(c *Client) {
 		c.httpClient = httpClient
@@ -90,7 +90,7 @@ func (c *Client) GetWorkspaceChannels(ctx context.Context, clientID, clientSecre
 }
 
 func (c *Client) Notify(ctx context.Context, conf NotificationConfig, message Message) error {
-	//message.Channel = "friday siren"
+	message.Channel = "test-corvus"
 	if c.retrier != nil {
 		if err := c.retrier.Run(ctx, func(ctx context.Context) error {
 			return c.notify(ctx, conf, message)

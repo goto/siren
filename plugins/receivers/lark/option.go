@@ -7,7 +7,7 @@ import (
 
 type ServiceOption func(*PluginService)
 
-// WithHTTPClient assigns custom http client when creating a slack service
+// WithHTTPClient assigns custom http client when creating a lark service
 func WithHTTPClient(httpClient *httpclient.Client) ServiceOption {
 	return func(s *PluginService) {
 		s.httpClient = httpClient

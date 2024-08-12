@@ -209,15 +209,12 @@ func (c *Client) getUserByEmail(ctx context.Context, email string, client *lark.
 		Build()
 	resp, err := client.Contact.User.BatchGetId(ctx, req)
 	if err != nil {
-		userinfo := resp.Data.UserList[len(resp.Data.UserList)-1]
-		return *userinfo.UserId, nil
+		return "", err
 	}
 
-	if !resp.Success() {
-		fmt.Println(resp.Code, resp.Msg, resp.RequestId())
-		return "nil", err
-
+	userinfo := resp.Data.UserList[len(resp.Data.UserList)-1]
+	if userinfo.UserId == nil {
+		return "", fmt.Errorf("users_not_found")
 	}
-
-	return "", nil
+	return *userinfo.UserId, nil
 }

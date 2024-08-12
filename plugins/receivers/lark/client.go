@@ -7,6 +7,7 @@ import (
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
 	"github.com/goto/siren/pkg/retry"
+	"github.com/goto/siren/pkg/secret"
 	lark "github.com/larksuite/oapi-sdk-go/v3"
 	larkcore "github.com/larksuite/oapi-sdk-go/v3/core"
 	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
@@ -71,8 +72,8 @@ func NewClient(cfg AppConfig, opts ...ClientOption) *Client {
 }
 
 // GetWorkspaceChannels fetches list of joined channel of a client
-func (c *Client) GetWorkspaceChannels(ctx context.Context, clientID, clientSecret string) ([]Channel, error) {
-	var client = lark.NewClient(clientID, clientSecret)
+func (c *Client) GetWorkspaceChannels(ctx context.Context, clientID, clientSecret secret.MaskableString) ([]Channel, error) {
+	var client = lark.NewClient(clientID.UnmaskedString(), clientSecret.UnmaskedString())
 
 	joinedChannelList, err := c.getJoinedChannelsList(ctx, client)
 	if err != nil {
@@ -103,7 +104,7 @@ func (c *Client) Notify(ctx context.Context, conf NotificationConfig, message Me
 // Notify sends message to a specific lark channel
 func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Message) error {
 
-	var client = lark.NewClient(conf.ClientID, conf.ClientSecret)
+	var client = lark.NewClient(conf.ClientID.UnmaskedString(), conf.ClientSecret.UnmaskedString())
 
 	var channelID string
 	switch conf.ChannelType {

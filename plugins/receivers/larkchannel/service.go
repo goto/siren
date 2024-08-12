@@ -37,14 +37,15 @@ func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configura
 	return configurations, nil
 }
 
-func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error) {
-	transformedConfigs, err := s.larkPluginService.PreHookQueueTransformConfigs(ctx, notificationConfigMap)
-	if err != nil {
-		return nil, err
+func (s *PluginService) PostHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
+	transformedConfigs, err := s.larkPluginService.PostHookDBTransformConfigs(ctx, configurations)
+	// if lark_channel is not expanded, it is okay to have lark config empty
+	if err != nil && !errors.Is(err, errors.ErrInvalid) {
+		return nil, fmt.Errorf("lark channel post hook db failed: %w", err)
 	}
 
 	var mergedConfigs = map[string]any{}
-	for k, v := range notificationConfigMap {
+	for k, v := range configurations {
 		if value, ok := transformedConfigs[k]; ok {
 			mergedConfigs[k] = value
 		} else {

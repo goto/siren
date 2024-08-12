@@ -50,6 +50,109 @@ func NewPluginService(cfg AppConfig, cryptoClient Encryptor, opts ...ServiceOpti
 	return s
 }
 
+func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
+	larkCredentialConfig := &ReceiverConfig{}
+	if err := mapstructure.Decode(configurations, larkCredentialConfig); err != nil {
+		return nil, fmt.Errorf("failed to transform configurations to pre transform config: %w", err)
+	}
+
+	if err := larkCredentialConfig.Validate(); err != nil {
+		return nil, errors.ErrInvalid.WithMsgf(err.Error())
+	}
+
+	encryptedClientId, err := s.cryptoClient.Encrypt(larkCredentialConfig.ClientID)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientId encryption failed: %w", err)
+	}
+	encryptedClientSecret, err := s.cryptoClient.Encrypt(larkCredentialConfig.ClientSecret)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientSecret encryption failed: %w", err)
+	}
+
+	receiverConfig := ReceiverConfig{
+		ClientID:     encryptedClientId,
+		ClientSecret: encryptedClientSecret,
+	}
+
+	return receiverConfig.AsMap(), nil
+}
+
+func (s *PluginService) PostHookDBTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error) {
+	notificationConfig := &NotificationConfig{}
+	if err := mapstructure.Decode(notificationConfigMap, notificationConfig); err != nil {
+		return nil, fmt.Errorf("failed to transform configurations to notification config: %w", err)
+	}
+
+	if err := notificationConfig.Validate(); err != nil {
+		return nil, err
+	}
+
+	clientId, err := s.cryptoClient.Decrypt(notificationConfig.ClientID)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientId decryption failed: %w", err)
+	}
+	clientSecret, err := s.cryptoClient.Decrypt(notificationConfig.ClientSecret)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientSecret decryption failed: %w", err)
+	}
+
+	notificationConfig.ClientID = clientId
+	notificationConfig.ClientSecret = clientSecret
+
+	return notificationConfig.AsMap(), nil
+}
+
+func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
+	larkCredentialConfig := &ReceiverConfig{}
+	if err := mapstructure.Decode(configurations, larkCredentialConfig); err != nil {
+		return nil, fmt.Errorf("failed to transform configurations to pre transform config: %w", err)
+	}
+
+	if err := larkCredentialConfig.Validate(); err != nil {
+		return nil, errors.ErrInvalid.WithMsgf(err.Error())
+	}
+
+	encryptedClientId, err := s.cryptoClient.Encrypt(larkCredentialConfig.ClientID)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientId encryption failed: %w", err)
+	}
+	encryptedClientSecret, err := s.cryptoClient.Encrypt(larkCredentialConfig.ClientSecret)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientSecret encryption failed: %w", err)
+	}
+
+	receiverConfig := ReceiverConfig{
+		ClientID:     encryptedClientId,
+		ClientSecret: encryptedClientSecret,
+	}
+
+	return receiverConfig.AsMap(), nil
+}
+func (s *PluginService) PostHookQueueTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error) {
+	notificationConfig := &NotificationConfig{}
+	if err := mapstructure.Decode(notificationConfigMap, notificationConfig); err != nil {
+		return nil, fmt.Errorf("failed to transform configurations to notification config: %w", err)
+	}
+
+	if err := notificationConfig.Validate(); err != nil {
+		return nil, err
+	}
+
+	clientId, err := s.cryptoClient.Decrypt(notificationConfig.ClientID)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientId decryption failed: %w", err)
+	}
+	clientSecret, err := s.cryptoClient.Decrypt(notificationConfig.ClientSecret)
+	if err != nil {
+		return nil, fmt.Errorf("lark clientSecret decryption failed: %w", err)
+	}
+
+	notificationConfig.ClientID = clientId
+	notificationConfig.ClientSecret = clientSecret
+
+	return notificationConfig.AsMap(), nil
+}
+
 // BuildData populates receiver data field based on config
 func (s *PluginService) BuildData(ctx context.Context, configurations map[string]any) (map[string]any, error) {
 	receiverConfig := &ReceiverConfig{}

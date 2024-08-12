@@ -6,6 +6,7 @@ import (
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
 	"github.com/goto/siren/pkg/retry"
+	"github.com/goto/siren/pkg/secret"
 )
 
 // AppConfig is a config loaded when siren is started
@@ -31,8 +32,8 @@ func (c *LarkCredentialConfig) Validate() error {
 
 // ReceiverConfig is a stored config for a lark receiver
 type ReceiverConfig struct {
-	ClientID     string `mapstructure:"client_id"`
-	ClientSecret string `mapstructure:"client_secret"`
+	ClientID     secret.MaskableString `mapstructure:"client_id"`
+	ClientSecret secret.MaskableString `mapstructure:"client_secret"`
 }
 
 func (c *ReceiverConfig) Validate() error {

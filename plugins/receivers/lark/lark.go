@@ -12,6 +12,6 @@ type Encryptor interface {
 }
 
 type LarkCaller interface {
-	GetWorkspaceChannels(ctx context.Context, clientID, clientSecret string) ([]Channel, error)
+	GetWorkspaceChannels(ctx context.Context, clientID, clientSecret secret.MaskableString) ([]Channel, error)
 	Notify(ctx context.Context, conf NotificationConfig, message Message) error
 }

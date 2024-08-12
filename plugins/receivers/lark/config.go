@@ -20,14 +20,13 @@ type AppConfig struct {
 type LarkCredentialConfig struct {
 	ClientID     string `mapstructure:"client_id"`
 	ClientSecret string `mapstructure:"client_secret"`
-	AuthCode     string `mapstructure:"auth_code"`
 }
 
 func (c *LarkCredentialConfig) Validate() error {
-	if c.ClientID != "" && c.ClientSecret != "" && c.AuthCode != "" {
+	if c.ClientID != "" && c.ClientSecret != "" {
 		return nil
 	}
-	return fmt.Errorf("invalid lark credentials, client_id: %s, client_secret: <secret>, auth_code: <secret>", c.ClientID)
+	return fmt.Errorf("invalid lark credentials, client_id: %s, client_secret: %s", c.ClientID, c.ClientSecret)
 }
 
 // ReceiverConfig is a stored config for a lark receiver

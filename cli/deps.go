@@ -164,6 +164,7 @@ func InitDeps(
 		receiver.TypeSlack:        slackPluginService,
 		receiver.TypeLark:         larkPluginService,
 		receiver.TypeSlackChannel: slackChannelPluginService,
+		receiver.TypeLarkChannel:  larkChannelPluginService,
 		receiver.TypePagerDuty:    pagerDutyPluginService,
 		receiver.TypeHTTP:         httpreceiverPluginService,
 		receiver.TypeFile:         filePluginService,

@@ -90,7 +90,6 @@ func (c *Client) GetWorkspaceChannels(ctx context.Context, clientID, clientSecre
 }
 
 func (c *Client) Notify(ctx context.Context, conf NotificationConfig, message Message) error {
-	message.Channel = "test-corvus"
 	if c.retrier != nil {
 		if err := c.retrier.Run(ctx, func(ctx context.Context) error {
 			return c.notify(ctx, conf, message)

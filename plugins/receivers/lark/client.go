@@ -73,7 +73,7 @@ func NewClient(cfg AppConfig, opts ...ClientOption) *Client {
 
 // GetWorkspaceChannels fetches list of joined channel of a client
 func (c *Client) GetWorkspaceChannels(ctx context.Context, clientID, clientSecret secret.MaskableString) ([]Channel, error) {
-	var client = lark.NewClient(clientID.UnmaskedString(), clientSecret.UnmaskedString())
+	var client = lark.NewClient(clientID.UnmaskedString(), clientSecret.UnmaskedString(), lark.WithOpenBaseUrl(c.cfg.APIHost))
 
 	joinedChannelList, err := c.getJoinedChannelsList(ctx, client)
 	if err != nil {
@@ -104,9 +104,10 @@ func (c *Client) Notify(ctx context.Context, conf NotificationConfig, message Me
 // Notify sends message to a specific lark channel
 func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Message) error {
 
-	var client = lark.NewClient(conf.ClientID.UnmaskedString(), conf.ClientSecret.UnmaskedString())
+	var client = lark.NewClient(conf.ClientID.UnmaskedString(), conf.ClientSecret.UnmaskedString(), lark.WithOpenBaseUrl(c.cfg.APIHost))
 
 	var channelID string
+	var receiverType string
 	switch conf.ChannelType {
 	case TypeChannelChannel:
 		joinedChannelList, err := c.getJoinedChannelsList(ctx, client)
@@ -120,15 +121,17 @@ func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Me
 		if channelID == "" {
 			return fmt.Errorf("app is not part of the channel %q", message.Channel)
 		}
+		receiverType = "chat_id"
 	case TypeChannelUser:
-		user, err := c.getUserByEmail(ctx, message.Channel, client)
+		_, err := c.getUserByEmail(ctx, message.Channel, client)
 		if err != nil {
 			if err.Error() == "users_not_found" {
 				return fmt.Errorf("failed to get id for %q", message.Channel)
 			}
 			return c.checkLarkErrorRetryable(err)
 		}
-		channelID = user
+		channelID = message.Channel
+		receiverType = "email"
 	default:
 		return fmt.Errorf("unknown receiver type %q", conf.ChannelType)
 	}
@@ -138,7 +141,7 @@ func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Me
 		return err
 	}
 
-	if err := c.sendMessageContext(ctx, client, channelID, msgOptions); err != nil {
+	if err := c.sendMessageContext(ctx, client, receiverType, channelID, msgOptions); err != nil {
 		if err := c.checkLarkErrorRetryable(err); errors.As(err, new(retry.RetryableError)) {
 			return err
 		}
@@ -148,9 +151,9 @@ func (c *Client) notify(ctx context.Context, conf NotificationConfig, message Me
 	return nil
 }
 
-func (c *Client) sendMessageContext(ctx context.Context, client *lark.Client, channelID string, msgOpts string) error {
+func (c *Client) sendMessageContext(ctx context.Context, client *lark.Client, receiverType, channelID string, msgOpts string) error {
 	req := larkim.NewCreateMessageReqBuilder().
-		ReceiveIdType(`chat_id`).
+		ReceiveIdType(receiverType).
 		Body(larkim.NewCreateMessageReqBodyBuilder().
 			ReceiveId(channelID).
 			MsgType(`interactive`).

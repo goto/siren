@@ -264,3 +264,15 @@ packages:
       SlackCaller:
         config:
           filename: "slack_caller.go"
+  github.com/goto/siren/plugins/receivers/lark:
+    config:
+      dir: "plugins/receivers/lark/mocks"
+      outpkg: "mocks"
+      mockname: "{{.InterfaceName}}"
+    interfaces:
+      Encryptor:
+        config:
+          filename: "encryptor.go"
+      LarkCaller:
+        config:
+          filename: "lark_caller.go"

@@ -1,0 +1,56 @@
+{{- define "__alert_severity_prefix_emoji" -}}
+  {{if ne .Data.status "firing" -}}
+  :CheckMark:
+  {{- else if eq .Data.severity "CRITICAL" -}}
+  :Fire:
+  {{- else if eq .Data.severity "WARNING" -}}
+  :StatusFlashOfInspiration:
+  {{- else -}}
+  :WHAT:
+  {{- end}}
+{{- end}}
+{{- define "lark.pretext" -}}	
+  {{- template "__alert_severity_prefix_emoji" . }} ({{ .Data.status | toUpper }}{{ if eq .Data.status "firing" }}:{{ .Data.num_alerts_firing }}{{ end }})
+  {{- if eq .Data.status "resolved" }} ~~({{ .Data.severity | toUpper }})~~
+  {{- else }} **({{ .Data.severity | toUpper }})**
+  {{- end}} {{ if .Data.alert_name }}{{.Data.alert_name}}{{else}}{{.Data.alertname}}{{end}}
+{{- end }}
+{{- define "lark.color" -}}
+{{- if eq .Data.status "firing" -}}
+  {{if eq .Data.severity "WARNING" -}}
+  yellow
+  {{- else if eq .Data.severity "CRITICAL" -}}
+  red
+  {{- else -}}
+  blue
+  {{- end -}}
+  {{else -}}
+  green
+  {{- end}}
+{{- end}}
+{{- define "lark.body"}}
+{{- .Data.summary}}
+{{ end}}
+{{- define "lark.dashboard"}}
+{{- if .Data.dashboard}}{{.Data.dashboard}}{{else}}{{.Data.defaultDashboard}}{{end}}
+{{- end -}}
+{{- define "lark.runbook"}}
+{{- if .Data.playbook}}{{.Data.playbook}}{{end}}
+{{- end -}}
+username: "Siren"
+icon_emoji: ":Loudspeaker:"
+templatecolor: "{{template "lark.color" . }}"
+elements:
+  - title: "title"
+    pretext: "{{template "lark.pretext" . }}"
+    text: |
+{{.Data.summary | indent 6}}
+    actions:
+    - tag: button
+      type: primary
+      text: {"tag":"lark_md", "content":"Runbook :StatusReading:"}
+      url: "{{template "lark.runbook" . }}"
+    - tag: button
+      type: primary
+      text: {"tag":"lark_md", "content":"Dashboard :GeneralInMeetingBusy:"}
+      url: "{{template "lark.dashboard" . }}"

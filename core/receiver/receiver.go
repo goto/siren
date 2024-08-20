@@ -43,6 +43,9 @@ func (r *Receiver) Validate() error {
 	if r.Type == TypeSlackChannel && r.ParentID == 0 {
 		return fmt.Errorf("type slack_channel needs receiver parent ID")
 	}
+	if r.Type == TypeLarkChannel && r.ParentID == 0 {
+		return fmt.Errorf("type lark_channel needs receiver parent ID")
+	}
 
 	return nil
 }

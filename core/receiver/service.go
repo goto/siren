@@ -217,6 +217,10 @@ func (s *Service) validateParent(ctx context.Context, rcv *Receiver) error {
 		if parentRcv.Type != TypeSlack {
 			return errors.ErrInvalid.WithMsgf("parent of slack_channel type should be slack but found %s", parentRcv.Type)
 		}
+	case TypeLarkChannel:
+		if parentRcv.Type != TypeLark {
+			return errors.ErrInvalid.WithMsgf("parent of lark_channel type should be lark but found %s", parentRcv.Type)
+		}
 	default:
 		return errors.ErrInvalid.WithMsgf("type %s should not have parent receiver", rcv.Type)
 	}

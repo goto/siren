@@ -2,6 +2,8 @@ package v1beta1
 
 import (
 	"github.com/goto/salt/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/goto/siren/internal/api"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
@@ -37,13 +39,27 @@ type GRPCServer struct {
 	subscriptionReceiverService api.SubscriptionReceiverService
 	notificationService         api.NotificationService
 	silenceService              api.SilenceService
+
+	metricBulkNotificationsCount            metric.Int64Gauge
+	metricNotificationReceiverSelectorCount metric.Int64Gauge
 }
 
 func NewGRPCServer(
 	logger log.Logger,
 	headers api.HeadersConfig,
 	apiDeps *api.Deps,
-	opts ...GRPCServerOption) *GRPCServer {
+	opts ...GRPCServerOption) (*GRPCServer, error) {
+
+	metricBulkNotificationsCount, err := otel.Meter("github.com/goto/siren/internal/api").
+		Int64Gauge("api.bulknotifications.notifications")
+	if err != nil {
+		return nil, err
+	}
+	metricNotificationReceiverSelectorCount, err := otel.Meter("github.com/goto/siren/internal/api").
+		Int64Gauge("api.notification.receiverselectors")
+	if err != nil {
+		return nil, err
+	}
 
 	s := &GRPCServer{
 		headers:                     headers,
@@ -58,11 +74,14 @@ func NewGRPCServer(
 		subscriptionReceiverService: apiDeps.SubscriptionReceiverService,
 		notificationService:         apiDeps.NotificationService,
 		silenceService:              apiDeps.SilenceService,
+
+		metricBulkNotificationsCount:            metricBulkNotificationsCount,
+		metricNotificationReceiverSelectorCount: metricNotificationReceiverSelectorCount,
 	}
 
 	for _, opt := range opts {
 		opt(s)
 	}
 
-	return s
+	return s, nil
 }

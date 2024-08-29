@@ -126,13 +126,17 @@ func RunServer(
 	runtimeCtx, runtimeCancel := context.WithCancel(ctx)
 	defer runtimeCancel()
 
-	sirenV1beta1ServiceRPC := v1beta1.NewGRPCServer(
+	sirenV1beta1ServiceRPC, err := v1beta1.NewGRPCServer(
 		logger,
 		c.APIHeaders,
 		apiDeps,
 		v1beta1.WithGlobalSubscription(c.UseGlobalSubscription),
 		v1beta1.WithDebugRequest(c.DebugRequest),
 	)
+	if err != nil {
+		return err
+	}
+
 	sirenV1ServiceRPC := v1.NewGRPCServer(
 		logger,
 		c.APIHeaders,

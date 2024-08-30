@@ -15,6 +15,7 @@ import (
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -26,7 +27,8 @@ func TestGRPCServer_ListNamespaces(t *testing.T) {
 
 	t.Run("should return list of all namespaces", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		dummyResult := []namespace.Namespace{
 			{
 				ID: 1,
@@ -53,7 +55,8 @@ func TestGRPCServer_ListNamespaces(t *testing.T) {
 
 	t.Run("should return Internal if getting namespaces failed", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().List(mock.AnythingOfType("context.todoCtx")).
 			Return(nil, errors.New("random error")).Once()
 		res, err := dummyGRPCServer.ListNamespaces(context.TODO(), &sirenv1beta1.ListNamespacesRequest{})
@@ -63,7 +66,8 @@ func TestGRPCServer_ListNamespaces(t *testing.T) {
 
 	t.Run("should return Internal if NewStruct conversion failed", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		credentials["bar"] = string([]byte{0xff})
 		dummyResult := []namespace.Namespace{
 			{
@@ -110,7 +114,8 @@ func TestGRPCServer_CreateNamespaces(t *testing.T) {
 
 	t.Run("should create a namespace", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Run(func(_a0 context.Context, _a1 *namespace.Namespace) {
 			_a1.ID = generatedID
 		}).Return(nil).Once()
@@ -121,7 +126,8 @@ func TestGRPCServer_CreateNamespaces(t *testing.T) {
 
 	t.Run("should return error Internal if creating namespaces failed", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.New("random error")).Once()
 		res, err := dummyGRPCServer.CreateNamespace(context.TODO(), request)
 		assert.Nil(t, res)
@@ -130,7 +136,8 @@ func TestGRPCServer_CreateNamespaces(t *testing.T) {
 
 	t.Run("should return error Invalid Argument if create service return err invalid", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 
 		mockedNamespaceService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrInvalid).Once()
 		res, err := dummyGRPCServer.CreateNamespace(context.TODO(), request)
@@ -141,7 +148,8 @@ func TestGRPCServer_CreateNamespaces(t *testing.T) {
 
 	t.Run("should return error AlreadyExists if create service return err conflict", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 
 		mockedNamespaceService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrConflict).Once()
 		res, err := dummyGRPCServer.CreateNamespace(context.TODO(), request)
@@ -159,7 +167,8 @@ func TestGRPCServer_GetNamespace(t *testing.T) {
 
 	t.Run("should get the namespace", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		dummyResult := &namespace.Namespace{
 			ID: 1,
 			Provider: provider.Provider{
@@ -184,7 +193,8 @@ func TestGRPCServer_GetNamespace(t *testing.T) {
 
 	t.Run("should return error Invalid Argument if no namespace found", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), uint64(1)).Return(nil, errors.ErrNotFound.WithCausef("some error")).Once()
 		res, err := dummyGRPCServer.GetNamespace(context.TODO(),
 			&sirenv1beta1.GetNamespaceRequest{Id: uint64(1)})
@@ -194,7 +204,8 @@ func TestGRPCServer_GetNamespace(t *testing.T) {
 
 	t.Run("should return error Internal if getting namespace fails", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), uint64(1)).
 			Return(nil, errors.New("random error")).Once()
 		res, err := dummyGRPCServer.GetNamespace(context.TODO(),
@@ -205,7 +216,8 @@ func TestGRPCServer_GetNamespace(t *testing.T) {
 
 	t.Run("should return error Internal if NewStruct conversion failed", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		credentials["bar"] = string([]byte{0xff})
 		dummyResult := &namespace.Namespace{
 			ID: 1,
@@ -252,7 +264,8 @@ func TestGRPCServer_UpdateNamespace(t *testing.T) {
 
 	t.Run("should update a namespace", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Run(func(_a0 context.Context, _a1 *namespace.Namespace) {
 			_a1.ID = payload.ID
 		}).Return(nil).Once()
@@ -264,7 +277,8 @@ func TestGRPCServer_UpdateNamespace(t *testing.T) {
 
 	t.Run("should return error Invalid Argument if namespace service return err invalid", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrInvalid).Once()
 
 		res, err := dummyGRPCServer.UpdateNamespace(context.TODO(), request)
@@ -274,7 +288,8 @@ func TestGRPCServer_UpdateNamespace(t *testing.T) {
 
 	t.Run("should return error AlreadyExists if namespace service return err conflict", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrConflict).Once()
 
 		res, err := dummyGRPCServer.UpdateNamespace(context.TODO(), request)
@@ -285,7 +300,8 @@ func TestGRPCServer_UpdateNamespace(t *testing.T) {
 	t.Run("should return error Internal if updating namespaces failed", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
 
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.New("random error")).Once()
 
 		res, err := dummyGRPCServer.UpdateNamespace(context.TODO(), request)
@@ -303,7 +319,8 @@ func TestGRPCServer_DeleteNamespace(t *testing.T) {
 
 	t.Run("should delete namespace object", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Delete(mock.AnythingOfType("context.todoCtx"), namespaceId).Return(nil).Once()
 		res, err := dummyGRPCServer.DeleteNamespace(context.TODO(), dummyReq)
 		assert.Nil(t, err)
@@ -313,7 +330,8 @@ func TestGRPCServer_DeleteNamespace(t *testing.T) {
 
 	t.Run("should return error Internal if deleting namespace failed", func(t *testing.T) {
 		mockedNamespaceService := &mocks.NamespaceService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NamespaceService: mockedNamespaceService})
+		require.NoError(t, err)
 		mockedNamespaceService.EXPECT().Delete(mock.AnythingOfType("context.todoCtx"), namespaceId).Return(errors.New("random error")).Once()
 		res, err := dummyGRPCServer.DeleteNamespace(context.TODO(), dummyReq)
 		assert.Nil(t, res)

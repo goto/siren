@@ -14,6 +14,7 @@ import (
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -27,7 +28,8 @@ func TestGRPCServer_ListProvider(t *testing.T) {
 	t.Run("should return list of all provider", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
 
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		dummyResult := []provider.Provider{
 			{
@@ -53,7 +55,8 @@ func TestGRPCServer_ListProvider(t *testing.T) {
 
 	t.Run("should return error Internal if getting providers failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().List(mock.AnythingOfType("context.todoCtx"), provider.Filter{}).Return(nil, errors.New("random error")).Once()
 		res, err := dummyGRPCServer.ListProviders(ctx, &sirenv1beta1.ListProvidersRequest{})
@@ -63,7 +66,8 @@ func TestGRPCServer_ListProvider(t *testing.T) {
 
 	t.Run("should return error Internal if NewStruct conversion failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		credentials["bar"] = string([]byte{0xff})
 		dummyResult := []provider.Provider{
@@ -114,7 +118,8 @@ func TestGRPCServer_CreateProvider(t *testing.T) {
 
 	t.Run("should create provider object", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Run(func(_a0 context.Context, _a1 *provider.Provider) {
 			_a1.ID = testID
@@ -126,7 +131,8 @@ func TestGRPCServer_CreateProvider(t *testing.T) {
 
 	t.Run("should return error Invalid Argument if provider return error invalid", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrInvalid).Once()
 		res, err := dummyGRPCServer.CreateProvider(ctx, dummyReq)
@@ -136,7 +142,8 @@ func TestGRPCServer_CreateProvider(t *testing.T) {
 
 	t.Run("should return error AlreadyExist if provider return error conflict", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrConflict).Once()
 		res, err := dummyGRPCServer.CreateProvider(ctx, dummyReq)
@@ -146,7 +153,8 @@ func TestGRPCServer_CreateProvider(t *testing.T) {
 
 	t.Run("should return error Internal if creating providers failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Create(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.New("random error")).Once()
 		res, err := dummyGRPCServer.CreateProvider(ctx, dummyReq)
@@ -169,7 +177,9 @@ func TestGRPCServer_GetProvider(t *testing.T) {
 
 	t.Run("should return a provider", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
+
 		dummyResult := &provider.Provider{
 			ID:          1,
 			Host:        "foo",
@@ -193,7 +203,8 @@ func TestGRPCServer_GetProvider(t *testing.T) {
 
 	t.Run("should return error Not Found if no provider found", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Get(mock.AnythingOfType("context.todoCtx"), providerId).
 			Return(nil, errors.ErrNotFound).Once()
@@ -205,7 +216,9 @@ func TestGRPCServer_GetProvider(t *testing.T) {
 
 	t.Run("should return error Internal if getting provider failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
+
 		dummyResult := &provider.Provider{
 			ID:          1,
 			Host:        "foo",
@@ -227,7 +240,8 @@ func TestGRPCServer_GetProvider(t *testing.T) {
 
 	t.Run("should return error Internal if NewStruct conversion failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		credentials["bar"] = string([]byte{0xff})
 		dummyResult := &provider.Provider{
@@ -277,7 +291,8 @@ func TestGRPCServer_UpdateProvider(t *testing.T) {
 
 	t.Run("should update provider object", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Run(func(_a0 context.Context, _a1 *provider.Provider) {
 			_a1.ID = testID
@@ -289,7 +304,8 @@ func TestGRPCServer_UpdateProvider(t *testing.T) {
 
 	t.Run("should return error Invalid Argument if updating providers return err invalid", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrInvalid).Once()
 		res, err := dummyGRPCServer.UpdateProvider(ctx, dummyReq)
@@ -299,7 +315,8 @@ func TestGRPCServer_UpdateProvider(t *testing.T) {
 
 	t.Run("should return error AlreadyExist if updating providers return err conflict", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.ErrConflict).Once()
 		res, err := dummyGRPCServer.UpdateProvider(ctx, dummyReq)
@@ -309,8 +326,8 @@ func TestGRPCServer_UpdateProvider(t *testing.T) {
 
 	t.Run("should return error Internal if updating providers failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
-
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 		mockedProviderService.EXPECT().Update(mock.AnythingOfType("context.todoCtx"), payload).Return(errors.New("random error")).Once()
 		res, err := dummyGRPCServer.UpdateProvider(ctx, dummyReq)
 		assert.Nil(t, res)
@@ -326,7 +343,8 @@ func TestGRPCServer_DeleteProvider(t *testing.T) {
 
 	t.Run("should delete provider object", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Delete(mock.AnythingOfType("context.todoCtx"), providerId).Return(nil).Once()
 		res, err := dummyGRPCServer.DeleteProvider(context.TODO(), dummyReq)
@@ -336,7 +354,8 @@ func TestGRPCServer_DeleteProvider(t *testing.T) {
 
 	t.Run("should return error Internal if deleting providers failed", func(t *testing.T) {
 		mockedProviderService := &mocks.ProviderService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{ProviderService: mockedProviderService})
+		require.NoError(t, err)
 
 		mockedProviderService.EXPECT().Delete(mock.AnythingOfType("context.todoCtx"), providerId).Return(errors.New("random error")).Once()
 		res, err := dummyGRPCServer.DeleteProvider(context.TODO(), dummyReq)

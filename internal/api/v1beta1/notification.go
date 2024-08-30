@@ -10,6 +10,8 @@ import (
 	"github.com/goto/siren/internal/api"
 	"github.com/goto/siren/pkg/errors"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -66,6 +68,13 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 	if req.GetTemplate() != "" {
 		notificationTemplate = req.GetTemplate()
 	}
+
+	s.metricNotificationReceiverSelectorCount.Record(
+		ctx, int64(len(receiverSelectors)),
+		metric.WithAttributes(
+			attribute.String("template", notificationTemplate),
+		),
+	)
 
 	notificationIDs, err := s.notificationService.Dispatch(ctx, []notification.Notification{
 		{
@@ -137,6 +146,10 @@ func (s *GRPCServer) PostBulkNotifications(ctx context.Context, req *sirenv1beta
 			Template:      notificationTemplate,
 		})
 	}
+
+	s.metricBulkNotificationsCount.Record(
+		ctx, int64(len(notifications)),
+	)
 
 	notificationIDs, err := s.notificationService.Dispatch(ctx, notifications)
 	if err != nil {

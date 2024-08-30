@@ -14,6 +14,7 @@ import (
 	"github.com/goto/siren/internal/api/v1beta1"
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGRPCServer_ListRules(t *testing.T) {
@@ -49,8 +50,8 @@ func TestGRPCServer_ListRules(t *testing.T) {
 			},
 		}
 
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
-
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		require.NoError(t, err)
 		mockedRuleService.EXPECT().List(ctx, rule.Filter{
 			Name:         dummyPayload.Name,
 			Namespace:    dummyPayload.Namespace,
@@ -73,7 +74,8 @@ func TestGRPCServer_ListRules(t *testing.T) {
 		ctx := context.TODO()
 		mockedRuleService := &mocks.RuleService{}
 
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		require.NoError(t, err)
 		mockedRuleService.EXPECT().List(ctx, rule.Filter{
 			Name:         dummyPayload.Name,
 			Namespace:    dummyPayload.Namespace,
@@ -124,7 +126,8 @@ func TestGRPCServer_UpdateRules(t *testing.T) {
 	t.Run("should update rule", func(t *testing.T) {
 		ctx := context.TODO()
 		mockedRuleService := &mocks.RuleService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		require.NoError(t, err)
 		dummyResult := &rule.Rule{}
 		*dummyResult = *dummyPayload
 		dummyResult.Enabled = false
@@ -145,7 +148,8 @@ func TestGRPCServer_UpdateRules(t *testing.T) {
 		ctx := context.TODO()
 		mockedRuleService := &mocks.RuleService{}
 
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		require.NoError(t, err)
 		mockedRuleService.EXPECT().Upsert(ctx, dummyPayload).Return(errors.ErrConflict).Once()
 
 		res, err := dummyGRPCServer.UpdateRule(ctx, dummyReq)
@@ -157,7 +161,8 @@ func TestGRPCServer_UpdateRules(t *testing.T) {
 		ctx := context.TODO()
 		mockedRuleService := &mocks.RuleService{}
 
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{RuleService: mockedRuleService})
+		require.NoError(t, err)
 		mockedRuleService.EXPECT().Upsert(ctx, dummyPayload).Return(errors.New("random error")).Once()
 
 		res, err := dummyGRPCServer.UpdateRule(ctx, dummyReq)

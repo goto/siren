@@ -13,6 +13,7 @@ import (
 	sirenv1beta1 "github.com/goto/siren/proto/gotocompany/siren/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -100,13 +101,15 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 				tc.setup(mockNotificationService)
 			}
 
-			dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{
+			dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{
 				IdempotencyKey: idempotencyHeaderKey,
 			}, &api.Deps{NotificationService: mockNotificationService})
+			require.NoError(t, err)
+
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.New(map[string]string{
 				idempotencyHeaderKey: tc.idempotencyKey,
 			}))
-			_, err := dummyGRPCServer.PostNotification(ctx, &sirenv1beta1.PostNotificationRequest{})
+			_, err = dummyGRPCServer.PostNotification(ctx, &sirenv1beta1.PostNotificationRequest{})
 
 			if (err != nil) && tc.errString != err.Error() {
 				t.Errorf("PostNotification() error = %v, wantErr %v", err, tc.errString)
@@ -135,7 +138,8 @@ func TestGRPCServer_ListNotifications(t *testing.T) {
 		}
 
 		mockNotificationService := &mocks.NotificationService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NotificationService: mockNotificationService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NotificationService: mockNotificationService})
+		require.NoError(t, err)
 		mockNotificationService.EXPECT().List(mock.AnythingOfType("context.todoCtx"), notification.Filter{Type: "reciever"}).Return(dummyResult, nil).Once()
 		res, err := dummyGRPCServer.ListNotifications(ctx, &sirenv1beta1.ListNotificationsRequest{Type: "reciever"})
 		assert.Nil(t, err)
@@ -145,7 +149,8 @@ func TestGRPCServer_ListNotifications(t *testing.T) {
 
 	t.Run("should return error if list notifications failed", func(t *testing.T) {
 		mockNotificationService := &mocks.NotificationService{}
-		dummyGRPCServer := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NotificationService: mockNotificationService})
+		dummyGRPCServer, err := v1beta1.NewGRPCServer(log.NewNoop(), api.HeadersConfig{}, &api.Deps{NotificationService: mockNotificationService})
+		require.NoError(t, err)
 		mockNotificationService.EXPECT().List(mock.AnythingOfType("context.todoCtx"), notification.Filter{Type: "alert"}).Return(nil, errors.New("internal server error")).Once()
 		res, err := dummyGRPCServer.ListNotifications(ctx, &sirenv1beta1.ListNotificationsRequest{Type: "alert"})
 		assert.Nil(t, res)

@@ -77,29 +77,28 @@ func (s *PluginService) PreHookDBTransformConfigs(ctx context.Context, configura
 	return receiverConfig.AsMap(), nil
 }
 
-func (s *PluginService) PostHookDBTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error) {
-	notificationConfig := &NotificationConfig{}
-	if err := mapstructure.Decode(notificationConfigMap, notificationConfig); err != nil {
+func (s *PluginService) PostHookDBTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {
+	receiverConfig := &ReceiverConfig{}
+	if err := mapstructure.Decode(configurations, receiverConfig); err != nil {
 		return nil, fmt.Errorf("failed to transform configurations to notification config: %w", err)
 	}
-
-	if err := notificationConfig.Validate(); err != nil {
+	if err := receiverConfig.Validate(); err != nil {
 		return nil, err
 	}
 
-	clientId, err := s.cryptoClient.Decrypt(notificationConfig.ClientID)
+	clientId, err := s.cryptoClient.Decrypt(receiverConfig.ClientID)
 	if err != nil {
 		return nil, fmt.Errorf("lark clientId decryption failed: %w", err)
 	}
-	clientSecret, err := s.cryptoClient.Decrypt(notificationConfig.ClientSecret)
+	clientSecret, err := s.cryptoClient.Decrypt(receiverConfig.ClientSecret)
 	if err != nil {
 		return nil, fmt.Errorf("lark clientSecret decryption failed: %w", err)
 	}
 
-	notificationConfig.ClientID = clientId
-	notificationConfig.ClientSecret = clientSecret
+	receiverConfig.ClientID = clientId
+	receiverConfig.ClientSecret = clientSecret
 
-	return notificationConfig.AsMap(), nil
+	return receiverConfig.AsMap(), nil
 }
 
 func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, configurations map[string]any) (map[string]any, error) {

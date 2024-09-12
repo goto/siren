@@ -97,9 +97,11 @@ func TestService_PostHookDBTransformConfigs(t *testing.T) {
 		wantErr               bool
 	}{
 		{
-			name:                  "should return error if failed to parse configmap to notification config",
-			notificationConfigMap: nil,
-			wantErr:               true,
+			name: "should return error if failed to parse configmap to notification config",
+			notificationConfigMap: map[string]any{
+				"client_id": 123,
+			},
+			wantErr: true,
 		},
 		{
 			name: "should return error if validate notification config failed",
@@ -111,7 +113,7 @@ func TestService_PostHookDBTransformConfigs(t *testing.T) {
 		{
 			name: "should return error if lark token decryption failed",
 			notificationConfigMap: map[string]any{
-				"client_id": secret.MaskableString("a token"),
+				"client_secret": 123,
 			},
 			setup: func(e *mocks.Encryptor) {
 				e.EXPECT().Decrypt(mock.AnythingOfType("secret.MaskableString")).Return("", errors.New("some error"))
@@ -151,11 +153,11 @@ func TestService_PostHookDBTransformConfigs(t *testing.T) {
 			s := larkchannel.NewPluginService(lark.AppConfig{}, mockEncryptor)
 			got, err := s.PostHookDBTransformConfigs(context.TODO(), tt.notificationConfigMap)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Service.PostHookQueueTransformConfigs() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Service.PostHookDBTransformConfigs() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Service.PostHookQueueTransformConfigs() = %v, want %v", got, tt.want)
+				t.Errorf("Service.PostHookDBTransformConfigs() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

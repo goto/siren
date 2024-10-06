@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestGRPCServer_PostNotification(t *testing.T) {
@@ -109,10 +110,24 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.New(map[string]string{
 				idempotencyHeaderKey: tc.idempotencyKey,
 			}))
-			_, err = dummyGRPCServer.PostNotification(ctx, &sirenv1beta1.PostNotificationRequest{})
 
-			if (err != nil) && tc.errString != err.Error() {
-				t.Errorf("PostNotification() error = %v, wantErr %v", err, tc.errString)
+			// Create a dummy request with valid receivers
+			req := &sirenv1beta1.PostNotificationRequest{
+				Receivers: []*structpb.Struct{
+					{
+						Fields: map[string]*structpb.Value{
+							"id": structpb.NewStringValue("123"),
+						},
+					},
+				},
+			}
+
+			_, err = dummyGRPCServer.PostNotification(ctx, req)
+
+			if tc.errString != "" {
+				assert.EqualError(t, err, tc.errString)
+			} else {
+				assert.NoError(t, err)
 			}
 
 			mockNotificationService.AssertExpectations(t)
@@ -133,7 +148,7 @@ func TestGRPCServer_ListNotifications(t *testing.T) {
 					"data-key": "data-value",
 				},
 				Labels:            map[string]string{},
-				ReceiverSelectors: []map[string]string{},
+				ReceiverSelectors: []map[string]interface{}{},
 			},
 		}
 

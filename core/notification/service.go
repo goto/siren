@@ -2,7 +2,6 @@ package notification
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -20,7 +19,7 @@ import (
 )
 
 type Router interface {
-	PrepareMetaMessages(ctx context.Context, n Notification) (metaMessages []MetaMessage, notificationLogs []log.Notification, err error)
+	PrepareMetaMessages(ctx context.Context, n Notification) ([]MetaMessage, []log.Notification, error)
 }
 
 type Dispatcher interface {
@@ -78,6 +77,13 @@ func NewService(
 	routerMap map[string]Router,
 	notifierPlugins map[string]Notifier,
 ) *Service {
+	if routerMap == nil {
+		routerMap = map[string]Router{
+			RouterReceiver:      NewRouterReceiverService(deps),
+			RouterSubscriber:    NewRouterSubscriberService(deps),
+			RouterDirectChannel: NewDirectChannelRouter(deps),
+		}
+	}
 	return &Service{
 		deps:            deps,
 		routerMap:       routerMap,
@@ -85,6 +91,17 @@ func NewService(
 	}
 }
 
+// determineFlow determines the flow of the notification
+func (s *Service) determineFlow(receiverSelectors []map[string]interface{}) string {
+	for _, selector := range receiverSelectors {
+		if config, ok := selector["config"].(map[string]interface{}); ok {
+			if _, hasChannel := config["channel"]; hasChannel {
+				return RouterDirectChannel
+			}
+		}
+	}
+	return RouterReceiver
+}
 func (s *Service) Dispatch(ctx context.Context, ns []Notification) ([]string, error) {
 	ctx = s.deps.Repository.WithTransaction(ctx)
 
@@ -169,13 +186,13 @@ func (s *Service) List(ctx context.Context, flt Filter) ([]Notification, error) 
 	return notifications, err
 }
 
-func (s *Service) getRouter(notificationRouterKind string) (Router, error) {
-	selectedRouter, exist := s.routerMap[notificationRouterKind]
-	if !exist {
-		return nil, errors.ErrInvalid.WithMsgf("unsupported notification router kind: %q", notificationRouterKind)
-	}
-	return selectedRouter, nil
-}
+// func (s *Service) getRouter(notificationRouterKind string) (Router, error) {
+// 	selectedRouter, exist := s.routerMap[notificationRouterKind]
+// 	if !exist {
+// 		return nil, errors.ErrInvalid.WithMsgf("unsupported notification router kind: %q", notificationRouterKind)
+// 	}
+// 	return selectedRouter, nil
+// }
 
 func (s *Service) dispatchInternal(ctx context.Context, ns []Notification) (notificationIDs []string, err error) {
 	var (
@@ -186,50 +203,37 @@ func (s *Service) dispatchInternal(ctx context.Context, ns []Notification) (noti
 	for _, n := range ns {
 		var flow string
 		if len(n.ReceiverSelectors) != 0 {
-			flow = RouterReceiver
+			flow = s.determineFlow(n.ReceiverSelectors)
 		} else if len(n.Labels) != 0 {
 			flow = RouterSubscriber
 		} else {
 			return nil, errors.ErrInvalid.WithMsgf("no receivers or labels found, unknown flow")
 		}
 
-		// NOTE: never invalid cause we have checked above
-		if err := n.Validate(flow); err != nil {
-			return nil, err
+		router, ok := s.routerMap[flow]
+		if !ok {
+			return nil, errors.ErrInvalid.WithMsgf("unknown flow %s", flow)
 		}
 
-		// TODO: test if flow is not recognized
-		router, err := s.getRouter(flow)
-		if err != nil {
-			return nil, err
-		}
-
-		generatedMetaMessages, generatedNotificationLogs, err := router.PrepareMetaMessages(ctx, n)
+		mms, nlogs, err := router.PrepareMetaMessages(ctx, n)
 		if err != nil {
 			if errors.Is(err, ErrRouteSubscriberNoMatchFound) {
-				errMessage := fmt.Sprintf("not matching any subscription for notification: %v", n)
-				nJson, err := json.MarshalIndent(n, "", "  ")
-				if err == nil {
-					errMessage = fmt.Sprintf("not matching any subscription for notification: %s", string(nJson))
-				}
-				s.deps.Logger.Warn(errMessage)
-				continue
+				continue // Skip this notification and continue with the next one
 			}
 			return nil, err
 		}
 
-		metaMessages = append(metaMessages, generatedMetaMessages...)
-		notificationLogs = append(notificationLogs, generatedNotificationLogs...)
+		metaMessages = append(metaMessages, mms...)
+		notificationLogs = append(notificationLogs, nlogs...)
+	}
+
+	if len(metaMessages) == 0 {
+		return nil, ErrNoMessage
 	}
 
 	messages, err := s.PrepareMessages(ctx, metaMessages)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(messages) == 0 {
-		s.deps.Logger.Info("no messages to process")
-		return nil, ErrNoMessage
 	}
 
 	if err := s.deps.LogService.LogNotifications(ctx, notificationLogs...); err != nil {

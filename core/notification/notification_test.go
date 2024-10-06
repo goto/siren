@@ -41,7 +41,7 @@ func TestNotification_Validate(t *testing.T) {
 				Labels: map[string]string{
 					"receiver_id": "2",
 				},
-				ReceiverSelectors: []map[string]string{
+				ReceiverSelectors: []map[string]interface{}{
 					{
 						"varkey1": "value1",
 					},
@@ -70,12 +70,46 @@ func TestNotification_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should return error if flow direct channel but has no receiver_selectors",
+			Flow: notification.RouterDirectChannel,
+			n: notification.Notification{
+				Labels: map[string]string{
+					"labelkey1": "value1",
+				},
+				Data: map[string]any{
+					"varkey1": "value1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return nil error if flow direct channel and receiver_selectors exist with config",
+			Flow: notification.RouterDirectChannel,
+			n: notification.Notification{
+				Type: "direct_channel", 
+				Labels: map[string]string{
+					"receiver_type": "channel",
+				},
+				Data: map[string]any{
+					"channel": "test-channel", 
+				},
+				ReceiverSelectors: []map[string]interface{}{
+					{
+						"type": "channel",
+						"config": map[string]interface{}{
+							"channel": "test-channel",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.n.Validate(tc.Flow)
 			if (err != nil) != tc.wantErr {
-				t.Errorf("Notification.ToMessage() error = %v, wantErr %v", err, tc.wantErr)
+				t.Errorf("Notification.Validate() error = %v, wantErr %v", err, tc.wantErr)
 				return
 			}
 		})

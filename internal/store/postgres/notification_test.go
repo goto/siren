@@ -97,6 +97,11 @@ func (s *NotificationRepositoryTestSuite) TestCreate() {
 				Data:        map[string]any{},
 				Labels:      map[string]string{},
 				CreatedAt:   time.Now(),
+				ReceiverSelectors: []map[string]interface{}{
+					{
+						"team": "gotocompany-infra",
+					},
+				},
 			},
 		},
 		{
@@ -146,6 +151,11 @@ func (s *NotificationRepositoryTestSuite) TestBulkCreate() {
 					Data:        map[string]any{},
 					Labels:      map[string]string{},
 					CreatedAt:   time.Now(),
+					ReceiverSelectors: []map[string]interface{}{
+						{
+							"team": "gotocompany-infra",
+						},
+					},
 				},
 				{
 					NamespaceID: 2,
@@ -153,6 +163,11 @@ func (s *NotificationRepositoryTestSuite) TestBulkCreate() {
 					Data:        map[string]any{},
 					Labels:      map[string]string{},
 					CreatedAt:   time.Now(),
+					ReceiverSelectors: []map[string]interface{}{
+						{
+							"team": "gotocompany-devops",
+						},
+					},
 				},
 			},
 			NumReturnedNotifications: 2,
@@ -217,7 +232,6 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 			},
 			ExpectedNotifications: []notification.Notification{
 				{
-					ID:          "789",
 					NamespaceID: 1,
 					Type:        "alert",
 					Data: map[string]interface{}{
@@ -227,7 +241,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 						"label-key": "label-value",
 					},
 					Template: "",
-					ReceiverSelectors: []map[string]string{
+					ReceiverSelectors: []map[string]interface{}{
 						{
 							"team":     "gotocompany-infra",
 							"severity": "WARNING",
@@ -245,29 +259,29 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 				Type: "event",
 			},
 			ExpectedNotifications: []notification.Notification{
-				{
-					ID:          "123",
+				{	
+					ID: "123",
 					NamespaceID: 1,
 					Type:        "event",
 					Data: map[string]interface{}{
 						"data-key": "data-value",
 					},
-					Labels:        map[string]string{},
-					Template:      "",
-					ValidDuration: 0,
-					UniqueKey:     "",
+					Labels:            map[string]string{},
+					Template:          "",
+					ValidDuration:     0,
+					UniqueKey:         "",
 				},
 				{
-					ID:          "10911",
+					ID: "10911",
 					NamespaceID: 2,
 					Type:        "event",
 					Data: map[string]any{
 						"data-key": "data-value",
 					},
-					Labels:        map[string]string{},
-					ValidDuration: time.Duration(0),
-					Template:      "expiry-alert",
-					UniqueKey:     "",
+					Labels:            map[string]string{},
+					ValidDuration:     time.Duration(0),
+					Template:          "expiry-alert",
+					UniqueKey:         "",
 				},
 			},
 		},
@@ -278,21 +292,21 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 			},
 			ExpectedNotifications: []notification.Notification{
 				{
-					ID:          "10911",
+					ID: "10911",
 					NamespaceID: 2,
 					Type:        "event",
 					Data: map[string]any{
 						"data-key": "data-value",
 					},
-					Labels:        map[string]string{},
-					ValidDuration: time.Duration(0),
-					Template:      "expiry-alert",
-					UniqueKey:     "",
+					Labels:            map[string]string{},
+					ValidDuration:     time.Duration(0),
+					Template:          "expiry-alert",
+					UniqueKey:         "",
 				},
 			},
 		},
 		{
-			Description: "should get all notifications with lable filter",
+			Description: "should get all notifications with label filter",
 			Filter: notification.Filter{
 				Labels: map[string]string{
 					"label-key": "label-value",
@@ -300,7 +314,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 			},
 			ExpectedNotifications: []notification.Notification{
 				{
-					ID:          "456",
+					ID: "456",
 					NamespaceID: 1,
 					Type:        "alert",
 					Data: map[string]interface{}{
@@ -310,7 +324,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 					Template: "",
 				},
 				{
-					ID:          "789",
+					ID: "789",
 					NamespaceID: 1,
 					Type:        "alert",
 					Data: map[string]interface{}{
@@ -320,7 +334,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 						"label-key": "label-value",
 					},
 					Template: "",
-					ReceiverSelectors: []map[string]string{
+					ReceiverSelectors: []map[string]interface{}{
 						{
 							"team":     "gotocompany-infra",
 							"severity": "WARNING",

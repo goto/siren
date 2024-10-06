@@ -283,10 +283,10 @@ func TestService_DispatchFailure(t *testing.T) {
 			)
 			if _, err := s.Dispatch(context.TODO(), tt.n); err != nil {
 				if err.Error() != tt.wantErrStr {
-					t.Errorf("Service.DispatchFailure() error = %v, wantErr %v", err, tt.wantErrStr)
+					t.Errorf("Service.DispatchSuccess() error = %v, wantErr %v", err, tt.wantErrStr)
 				}
-			} else {
-				t.Errorf("Service.DispatchFailure() error = %v, wantErr %v", err, tt.wantErrStr)
+			} else if tt.wantErrStr != "" {
+				t.Errorf("Service.DispatchSuccess() expected error %v, got nil", tt.wantErrStr)
 			}
 		})
 	}

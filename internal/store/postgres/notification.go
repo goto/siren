@@ -67,6 +67,11 @@ func (r *NotificationRepository) Create(ctx context.Context, n notification.Noti
 		}...,
 	)
 
+	receiverSelectorsJSON, err := json.Marshal(nModel.ReceiverSelectors)
+	if err != nil {
+		return notification.Notification{}, err
+	}
+
 	if err := r.client.QueryRowxContext(ctx, notificationInsertQuery,
 		nModel.NamespaceID,
 		nModel.Type,
@@ -75,7 +80,7 @@ func (r *NotificationRepository) Create(ctx context.Context, n notification.Noti
 		nModel.ValidDuration,
 		nModel.Template,
 		nModel.UniqueKey,
-		nModel.ReceiverSelectors,
+		receiverSelectorsJSON,
 	).StructScan(&newNModel); err != nil {
 		return notification.Notification{}, err
 	}

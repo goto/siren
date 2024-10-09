@@ -26,8 +26,19 @@ func (s *RouterReceiverService) PrepareMetaMessages(ctx context.Context, n Notif
 		return nil, nil, errors.ErrInvalid.WithMsgf("number of receiver selectors should be less than or equal threshold %d", s.deps.Cfg.MaxNumReceiverSelectors)
 	}
 
+	convertedSelectors := make([]map[string]string, len(n.ReceiverSelectors))
+	for i, selector := range n.ReceiverSelectors {
+		convertedSelectors[i] = make(map[string]string)
+		for k, v := range selector {
+			if strVal, ok := v.(string); ok {
+				convertedSelectors[i][k] = strVal
+			} else {
+				return nil, nil, errors.ErrInvalid.WithMsgf("receiver selector value for key %s is not a string", k)
+			}
+		}
+	}
 	rcvs, err := s.deps.ReceiverService.List(ctx, receiver.Filter{
-		MultipleLabels: n.ReceiverSelectors,
+		MultipleLabels: convertedSelectors,
 		Expanded:       true,
 	})
 	if err != nil {

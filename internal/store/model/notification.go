@@ -9,16 +9,16 @@ import (
 )
 
 type Notification struct {
-	ID                string                  `db:"id"`
-	NamespaceID       sql.NullInt64           `db:"namespace_id"`
-	Type              string                  `db:"type"`
-	Data              pgc.StringAnyMap        `db:"data"`
-	Labels            pgc.StringStringMap     `db:"labels"`
-	ValidDuration     pgc.TimeDuration        `db:"valid_duration"`
-	UniqueKey         sql.NullString          `db:"unique_key"`
-	Template          sql.NullString          `db:"template"`
-	CreatedAt         time.Time               `db:"created_at"`
-	ReceiverSelectors pgc.ListStringStringMap `db:"receiver_selectors"`
+	ID                string                    `db:"id"`
+	NamespaceID       sql.NullInt64             `db:"namespace_id"`
+	Type              string                    `db:"type"`
+	Data              pgc.StringAnyMap          `db:"data"`
+	Labels            pgc.StringStringMap       `db:"labels"`
+	ValidDuration     pgc.TimeDuration          `db:"valid_duration"`
+	UniqueKey         sql.NullString            `db:"unique_key"`
+	Template          sql.NullString            `db:"template"`
+	CreatedAt         time.Time                 `db:"created_at"`
+	ReceiverSelectors []map[string]interface{}  `db:"receiver_selectors"`
 }
 
 func (n *Notification) FromDomain(d notification.Notification) {

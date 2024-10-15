@@ -26,7 +26,7 @@ func TestRouterReceiverService_PrepareMetaMessage(t *testing.T) {
 		{
 			name: "should return error if number of receiver selector is more than threshold",
 			n: notification.Notification{
-				ReceiverSelectors: []map[string]string{
+				ReceiverSelectors: []map[string]interface{}{
 					{
 						"k1": "v1",
 					},
@@ -73,28 +73,61 @@ func TestRouterReceiverService_PrepareMetaMessage(t *testing.T) {
 		},
 		{
 			name: "should return no error if succeed",
-			n:    notification.Notification{},
+			n: notification.Notification{
+				ID:          "test-notification-id",
+				NamespaceID: 123,
+			},
 			setup: func(rs *mocks.ReceiverService, n *mocks.Notifier) {
 				rs.EXPECT().List(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("receiver.Filter")).Return([]receiver.Receiver{
 					{
 						ID: 1,
+						Configurations: map[string]interface{}{
+							"token":        "token1",
+							"workspace":    "workspace1",
+							"channel_name": "channel1",
+						},
 					},
 					{
 						ID: 2,
+						Configurations: map[string]interface{}{
+							"token":        "token2",
+							"workspace":    "workspace2",
+							"channel_name": "channel2",
+						},
 					},
 				}, nil)
 			},
 			want: []notification.MetaMessage{
 				{
-					ReceiverID: 1,
+					ReceiverID:      1,
+					NotificationIDs: []string{"test-notification-id"},
+					ReceiverConfigs: map[string]interface{}{
+						"token":        "token1",
+						"workspace":    "workspace1",
+						"channel_name": "channel1",
+					},
 				},
 				{
-					ReceiverID: 2,
+					ReceiverID:      2,
+					NotificationIDs: []string{"test-notification-id"},
+					ReceiverConfigs: map[string]interface{}{
+						"token":        "token2",
+						"workspace":    "workspace2",
+						"channel_name": "channel2",
+					},
 				},
 			},
 			want1: []log.Notification{
-				{ReceiverID: 1},
-				{ReceiverID: 2},
+				{
+					ReceiverID:     1,
+					NotificationID: "test-notification-id",
+					NamespaceID:    123,
+				},
+				{
+					ReceiverID:     2,
+					NotificationID: "test-notification-id",
+					NamespaceID:    123,
+				},
 			},
 		},
 	}

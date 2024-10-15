@@ -33,6 +33,7 @@ type SubscriptionService interface {
 
 type ReceiverService interface {
 	List(ctx context.Context, flt receiver.Filter) ([]receiver.Receiver, error)
+	Get(ctx context.Context, id uint64, opts ...receiver.GetOption) (*receiver.Receiver, error)
 }
 
 type SilenceService interface {
@@ -237,6 +238,7 @@ func (s *Service) dispatchInternal(ctx context.Context, ns []Notification) (noti
 	}
 
 	if err := s.deps.Q.Enqueue(ctx, messages...); err != nil {
+		fmt.Printf("Context: %+v\n", ctx)
 		return nil, fmt.Errorf("failed enqueuing messages: %w", err)
 	}
 

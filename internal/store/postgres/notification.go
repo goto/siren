@@ -176,7 +176,15 @@ func (r *NotificationRepository) List(ctx context.Context, flt notification.Filt
 		if err := rows.StructScan(&notificationModel); err != nil {
 			return nil, err
 		}
-		notificationsDomain = append(notificationsDomain, *notificationModel.ToDomain())
+
+		notificationDomain := notificationModel.ToDomain()
+
+		// Always ensure ReceiverSelectors is initialized
+		if notificationDomain.ReceiverSelectors == nil {
+			notificationDomain.ReceiverSelectors = []map[string]any{}
+		}
+
+		notificationsDomain = append(notificationsDomain, *notificationDomain)
 	}
 	return notificationsDomain, nil
 }

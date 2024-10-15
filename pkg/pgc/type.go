@@ -118,7 +118,7 @@ func (a ListString) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }
 
-type ListStringAnyMap []map[string]interface{}
+type ListStringAnyMap []map[string]any
 
 func (m *ListStringAnyMap) Scan(value interface{}) error {
 	if value == nil {

@@ -25,12 +25,26 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 	testCases := []struct {
 		name           string
 		idempotencyKey string
+		request        *sirenv1beta1.PostNotificationRequest
 		setup          func(*mocks.NotificationService)
+		expectedID     string
 		errString      string
 	}{
 		{
+			name:           "should return invalid argument if no receivers or labels provided",
+			idempotencyKey: "test",
+			request:        &sirenv1beta1.PostNotificationRequest{},
+			setup: func(ns *mocks.NotificationService) {
+				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
+			},
+			errString: "rpc error: code = InvalidArgument desc = receivers or labels must be provided",
+		},
+		{
 			name:           "should return invalid argument if post notification return invalid argument",
 			idempotencyKey: "test",
+			request: &sirenv1beta1.PostNotificationRequest{
+				Labels: map[string]string{"key": "value"},
+			},
 			setup: func(ns *mocks.NotificationService) {
 				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
 				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return(nil, errors.ErrInvalid)
@@ -40,15 +54,21 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 		{
 			name:           "should return internal error if post notification return some error",
 			idempotencyKey: "test",
+			request: &sirenv1beta1.PostNotificationRequest{
+				Labels: map[string]string{"key": "value"},
+			},
 			setup: func(ns *mocks.NotificationService) {
 				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
-				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return(nil, errors.New("some error"))
+				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return(nil, errors.New("some unexpected error"))
 			},
 			errString: "rpc error: code = Internal desc = some unexpected error occurred",
 		},
 		{
-			name:           "should return invalid error if post notification return err no message",
+			name:           "should return invalid error if post notification return err_no_message",
 			idempotencyKey: "test",
+			request: &sirenv1beta1.PostNotificationRequest{
+				Labels: map[string]string{"key": "value"},
+			},
 			setup: func(ns *mocks.NotificationService) {
 				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
 				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return(nil, notification.ErrNoMessage)
@@ -57,10 +77,15 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 		},
 		{
 			name:           "should return success if request is idempotent",
-			idempotencyKey: "test",
-			setup: func(ns *mocks.NotificationService) {
-				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(notificationID, nil)
+			idempotencyKey: "test-idempotent",
+			request: &sirenv1beta1.PostNotificationRequest{
+				Labels: map[string]string{"key": "value"},
 			},
+			setup: func(ns *mocks.NotificationService) {
+				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), "test-idempotent").Return(notificationID, nil)
+			},
+			expectedID: notificationID,
+			errString:  "",
 		},
 		{
 			name:           "should return error if idempotency checking return error",
@@ -71,24 +96,33 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 			errString: "rpc error: code = Internal desc = some unexpected error occurred",
 		},
 		{
-			name:           "should return error if error inserting idempotency",
-			idempotencyKey: "test",
-			setup: func(ns *mocks.NotificationService) {
-				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
-				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return([]string{notificationID}, nil)
-				ns.EXPECT().InsertIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(errors.New("some error"))
-			},
-			errString: "rpc error: code = Internal desc = some unexpected error occurred",
-		},
+            name:           "should return error if error inserting idempotency",
+            idempotencyKey: "test",
+            request: &sirenv1beta1.PostNotificationRequest{
+                Labels: map[string]string{"key": "value"},
+            },
+            setup: func(ns *mocks.NotificationService) {
+                ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
+                ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return([]string{notificationID}, nil)
+                ns.EXPECT().InsertIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), notificationID).Return(errors.New("some error"))
+            },
+            errString: "rpc error: code = Internal desc = some unexpected error occurred",
+        },
+
 		{
-			name:           "should return OK response if post notification succeed",
-			idempotencyKey: "test",
-			setup: func(ns *mocks.NotificationService) {
-				ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
-				ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return([]string{notificationID}, nil)
-				ns.EXPECT().InsertIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
-			},
-		},
+            name:           "should return OK response if post notification succeed",
+            idempotencyKey: "test",
+            request: &sirenv1beta1.PostNotificationRequest{
+                Labels: map[string]string{"key": "value"},
+            },
+            setup: func(ns *mocks.NotificationService) {
+                ns.EXPECT().CheckIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("", errors.ErrNotFound)
+                ns.EXPECT().Dispatch(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("[]notification.Notification")).Return([]string{notificationID}, nil)
+                ns.EXPECT().InsertIdempotency(mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"), mock.AnythingOfType("string"), notificationID).Return(nil)
+            },
+            expectedID: notificationID,
+            errString:  "",
+        },
 	}
 
 	for _, tc := range testCases {
@@ -109,10 +143,19 @@ func TestGRPCServer_PostNotification(t *testing.T) {
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.New(map[string]string{
 				idempotencyHeaderKey: tc.idempotencyKey,
 			}))
-			_, err = dummyGRPCServer.PostNotification(ctx, &sirenv1beta1.PostNotificationRequest{})
+			resp, err := dummyGRPCServer.PostNotification(ctx, tc.request)
 
-			if (err != nil) && tc.errString != err.Error() {
-				t.Errorf("PostNotification() error = %v, wantErr %v", err, tc.errString)
+			if tc.errString != "" {
+				if err == nil || err.Error() != tc.errString {
+					t.Errorf("PostNotification() error = %v, wantErr %v", err, tc.errString)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("PostNotification() unexpected error = %v", err)
+				}
+				if resp == nil || resp.NotificationId != tc.expectedID {
+					t.Errorf("PostNotification() got notification ID = %v, want %v", resp.GetNotificationId(), tc.expectedID)
+				}
 			}
 
 			mockNotificationService.AssertExpectations(t)
@@ -133,7 +176,7 @@ func TestGRPCServer_ListNotifications(t *testing.T) {
 					"data-key": "data-value",
 				},
 				Labels:            map[string]string{},
-				ReceiverSelectors: []map[string]string{},
+				ReceiverSelectors: []map[string]interface{}{},
 			},
 		}
 

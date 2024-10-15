@@ -227,7 +227,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 						"label-key": "label-value",
 					},
 					Template: "",
-					ReceiverSelectors: []map[string]string{
+					ReceiverSelectors: []map[string]interface{}{
 						{
 							"team":     "gotocompany-infra",
 							"severity": "WARNING",
@@ -252,10 +252,11 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 					Data: map[string]interface{}{
 						"data-key": "data-value",
 					},
-					Labels:        map[string]string{},
-					Template:      "",
-					ValidDuration: 0,
-					UniqueKey:     "",
+					Labels:            map[string]string{},
+					Template:          "",
+					ValidDuration:     0,
+					UniqueKey:         "",
+					ReceiverSelectors: []map[string]interface{}{},
 				},
 				{
 					ID:          "10911",
@@ -264,10 +265,11 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 					Data: map[string]any{
 						"data-key": "data-value",
 					},
-					Labels:        map[string]string{},
-					ValidDuration: time.Duration(0),
-					Template:      "expiry-alert",
-					UniqueKey:     "",
+					Labels:            map[string]string{},
+					ValidDuration:     time.Duration(0),
+					Template:          "expiry-alert",
+					UniqueKey:         "",
+					ReceiverSelectors: []map[string]interface{}{},
 				},
 			},
 		},
@@ -284,15 +286,16 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 					Data: map[string]any{
 						"data-key": "data-value",
 					},
-					Labels:        map[string]string{},
-					ValidDuration: time.Duration(0),
-					Template:      "expiry-alert",
-					UniqueKey:     "",
+					Labels:            map[string]string{},
+					ValidDuration:     time.Duration(0),
+					Template:          "expiry-alert",
+					UniqueKey:         "",
+					ReceiverSelectors: []map[string]interface{}{},
 				},
 			},
 		},
 		{
-			Description: "should get all notifications with lable filter",
+			Description: "should get all notifications with label filter",
 			Filter: notification.Filter{
 				Labels: map[string]string{
 					"label-key": "label-value",
@@ -306,8 +309,11 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 					Data: map[string]interface{}{
 						"data-key": "data-value",
 					},
-					Labels:   map[string]string{"label-key": "label-value"},
-					Template: "",
+					Labels:            map[string]string{"label-key": "label-value"},
+					Template:          "",
+					ReceiverSelectors: []map[string]interface{}{}, // Initialize this
+					UniqueKey:         "",
+					ValidDuration:     0,
 				},
 				{
 					ID:          "789",
@@ -320,7 +326,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 						"label-key": "label-value",
 					},
 					Template: "",
-					ReceiverSelectors: []map[string]string{
+					ReceiverSelectors: []map[string]interface{}{
 						{
 							"team":     "gotocompany-infra",
 							"severity": "WARNING",
@@ -329,6 +335,8 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 							"id": "2",
 						},
 					},
+					UniqueKey:     "",
+					ValidDuration: 0,
 				},
 			},
 		},

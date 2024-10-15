@@ -19,12 +19,38 @@ import (
 
 const notificationAPIScope = "notification_api"
 
-func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[string]string, labels map[string]string) error {
+func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[string]interface{}, labels map[string]string) error {
+	if len(receiverSelectors) == 0 && len(labels) == 0 {
+		return errors.ErrInvalid.WithMsgf("receivers or labels must be provided")
+	}
+
 	if len(receiverSelectors) > 0 && len(labels) > 0 {
 		return errors.ErrInvalid.WithMsgf("receivers and labels cannot being used at the same time, should be used either one of them")
 	}
 
 	return nil
+}
+
+func (s *GRPCServer) parseReceivers(pbSelectors []*structpb.Struct) ([]map[string]interface{}, error) {
+	var receiverSelectors []map[string]interface{}
+
+	for _, pbSelector := range pbSelectors {
+		selector := make(map[string]interface{})
+		for k, v := range pbSelector.AsMap() {
+			if k == "config" {
+				configMap, ok := v.(map[string]interface{})
+				if !ok {
+					return nil, errors.ErrInvalid.WithMsgf("invalid config format, expected map[string]interface{}")
+				}
+				selector[k] = configMap
+			} else {
+				selector[k] = v
+			}
+		}
+		receiverSelectors = append(receiverSelectors, selector)
+	}
+
+	return receiverSelectors, nil
 }
 
 func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.PostNotificationRequest) (*sirenv1beta1.PostNotificationResponse, error) {
@@ -35,29 +61,17 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 
 	idempotencyKey := api.GetHeaderString(ctx, s.headers.IdempotencyKey)
 	if idempotencyKey != "" {
-		if notificationID, err := s.notificationService.CheckIdempotency(ctx, idempotencyScope, idempotencyKey); notificationID != "" {
+		if notificationID, err := s.notificationService.CheckIdempotency(ctx, idempotencyScope, idempotencyKey); err == nil {
 			return &sirenv1beta1.PostNotificationResponse{
 				NotificationId: notificationID,
 			}, nil
-		} else if errors.Is(err, errors.ErrNotFound) {
-			s.logger.Debug("no idempotency found with detail", "scope", idempotencyScope, "key", idempotencyKey)
-		} else {
+		} else if !errors.Is(err, errors.ErrNotFound) {
 			return nil, api.GenerateRPCErr(s.logger, fmt.Errorf("error when checking idempotency: %w", err))
 		}
 	}
-
-	var receiverSelectors = []map[string]string{}
-	for _, pbSelector := range req.GetReceivers() {
-		var mss = make(map[string]string)
-		for k, v := range pbSelector.AsMap() {
-			vString, ok := v.(string)
-			if !ok {
-				err := errors.ErrInvalid.WithMsgf("invalid receiver selectors, value must be string but found %v", v)
-				return nil, api.GenerateRPCErr(s.logger, err)
-			}
-			mss[k] = vString
-		}
-		receiverSelectors = append(receiverSelectors, mss)
+	receiverSelectors, err := s.parseReceivers(req.GetReceivers())
+	if err != nil {
+		return nil, api.GenerateRPCErr(s.logger, fmt.Errorf("error while parsing receivers: %w", err))
 	}
 
 	if err := s.validatePostNotificationPayload(receiverSelectors, req.GetLabels()); err != nil {

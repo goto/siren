@@ -45,7 +45,7 @@ func (s *RouterReceiverService) PrepareMetaMessages(ctx context.Context, n Notif
 		rcvs, userConfigs, err = s.handleConfigCase(ctx, n.ReceiverSelectors)
 	} else {
 		// Handle case when only receiver IDs are provided
-		rcvs, err = s.handleIDOnlyCase(ctx, n.ReceiverSelectors)
+		rcvs, err = s.handleNonConfigCase(ctx, n.ReceiverSelectors)
 	}
 
 	if err != nil {
@@ -123,7 +123,7 @@ func (s *RouterReceiverService) handleConfigCase(ctx context.Context, selectors 
 	return rcvs, userConfigs, nil
 }
 
-func (s *RouterReceiverService) handleIDOnlyCase(ctx context.Context, selectors []map[string]any) ([]receiver.Receiver, error) {
+func (s *RouterReceiverService) handleNonConfigCase(ctx context.Context, selectors []map[string]any) ([]receiver.Receiver, error) {
 	convertedSelectors := make([]map[string]string, len(selectors))
 	for i, selector := range selectors {
 		convertedSelectors[i] = make(map[string]string)

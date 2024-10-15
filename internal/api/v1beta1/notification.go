@@ -61,11 +61,13 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 
 	idempotencyKey := api.GetHeaderString(ctx, s.headers.IdempotencyKey)
 	if idempotencyKey != "" {
-		if notificationID, err := s.notificationService.CheckIdempotency(ctx, idempotencyScope, idempotencyKey); err == nil {
+		if notificationID, err := s.notificationService.CheckIdempotency(ctx, idempotencyScope, idempotencyKey); notificationID != "" {
 			return &sirenv1beta1.PostNotificationResponse{
 				NotificationId: notificationID,
 			}, nil
-		} else if !errors.Is(err, errors.ErrNotFound) {
+		} else if errors.Is(err, errors.ErrNotFound) {
+			s.logger.Debug("no idempotency found with detail", "scope", idempotencyScope, "key", idempotencyKey)
+		} else {
 			return nil, api.GenerateRPCErr(s.logger, fmt.Errorf("error when checking idempotency: %w", err))
 		}
 	}

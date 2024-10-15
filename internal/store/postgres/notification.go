@@ -181,7 +181,7 @@ func (r *NotificationRepository) List(ctx context.Context, flt notification.Filt
 
 		// Always ensure ReceiverSelectors is initialized
 		if notificationDomain.ReceiverSelectors == nil {
-			notificationDomain.ReceiverSelectors = []map[string]interface{}{}
+			notificationDomain.ReceiverSelectors = []map[string]any{}
 		}
 
 		notificationsDomain = append(notificationsDomain, *notificationDomain)

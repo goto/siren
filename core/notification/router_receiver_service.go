@@ -87,7 +87,7 @@ func (s *RouterReceiverService) PrepareMetaMessages(ctx context.Context, n Notif
 	return metaMessages, notificationLogs, nil
 }
 
-func (s *RouterReceiverService) handleConfigCase(ctx context.Context, selectors []map[string]interface{}) ([]receiver.Receiver, map[uint64]map[string]interface{}, error) {
+func (s *RouterReceiverService) handleConfigCase(ctx context.Context, selectors []map[string]any) ([]receiver.Receiver, map[uint64]map[string]interface{}, error) {
 	var receiverIDs []uint64
 	userConfigs := make(map[uint64]map[string]interface{})
 
@@ -123,7 +123,7 @@ func (s *RouterReceiverService) handleConfigCase(ctx context.Context, selectors 
 	return rcvs, userConfigs, nil
 }
 
-func (s *RouterReceiverService) handleIDOnlyCase(ctx context.Context, selectors []map[string]interface{}) ([]receiver.Receiver, error) {
+func (s *RouterReceiverService) handleIDOnlyCase(ctx context.Context, selectors []map[string]any) ([]receiver.Receiver, error) {
 	convertedSelectors := make([]map[string]string, len(selectors))
 	for i, selector := range selectors {
 		convertedSelectors[i] = make(map[string]string)

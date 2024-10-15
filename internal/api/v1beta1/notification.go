@@ -19,7 +19,7 @@ import (
 
 const notificationAPIScope = "notification_api"
 
-func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[string]interface{}, labels map[string]string) error {
+func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[string]any, labels map[string]string) error {
 	if len(receiverSelectors) == 0 && len(labels) == 0 {
 		return errors.ErrInvalid.WithMsgf("receivers or labels must be provided")
 	}
@@ -31,8 +31,8 @@ func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[str
 	return nil
 }
 
-func (s *GRPCServer) parseReceivers(pbSelectors []*structpb.Struct) ([]map[string]interface{}, error) {
-	var receiverSelectors []map[string]interface{}
+func (s *GRPCServer) parseReceivers(pbSelectors []*structpb.Struct) ([]map[string]any, error) {
+	var receiverSelectors []map[string]any
 
 	for _, pbSelector := range pbSelectors {
 		selector := make(map[string]interface{})
@@ -40,7 +40,7 @@ func (s *GRPCServer) parseReceivers(pbSelectors []*structpb.Struct) ([]map[strin
 			if k == "config" {
 				configMap, ok := v.(map[string]interface{})
 				if !ok {
-					return nil, errors.ErrInvalid.WithMsgf("invalid config format, expected map[string]interface{}")
+					return nil, errors.ErrInvalid.WithMsgf("invalid config format, expected map[string]any")
 				}
 				selector[k] = configMap
 			} else {

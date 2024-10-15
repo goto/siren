@@ -53,7 +53,7 @@ func (n *Notification) FromDomain(d notification.Notification) {
 func (n *Notification) ToDomain() *notification.Notification {
 	receiverSelectors := n.ReceiverSelectors
 	if receiverSelectors == nil {
-		receiverSelectors = []map[string]interface{}{}
+		receiverSelectors = []map[string]any{}
 	}
 	return &notification.Notification{
 		ID:                n.ID,

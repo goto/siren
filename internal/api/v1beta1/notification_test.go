@@ -176,7 +176,7 @@ func TestGRPCServer_ListNotifications(t *testing.T) {
 					"data-key": "data-value",
 				},
 				Labels:            map[string]string{},
-				ReceiverSelectors: []map[string]interface{}{},
+				ReceiverSelectors: []map[string]any{},
 			},
 		}
 

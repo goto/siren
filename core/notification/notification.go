@@ -44,7 +44,7 @@ type Notification struct {
 	ValidDuration     time.Duration            `json:"valid_duration"`
 	Template          string                   `json:"template"`
 	UniqueKey         string                   `json:"unique_key"`
-	ReceiverSelectors []map[string]interface{} `json:"receiver_selectors"`
+	ReceiverSelectors []map[string]any `json:"receiver_selectors"`
 	CreatedAt         time.Time                `json:"created_at"`
 
 	// won't be stored in notification table, only to propagate this to notification_subscriber

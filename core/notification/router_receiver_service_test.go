@@ -26,7 +26,7 @@ func TestRouterReceiverService_PrepareMetaMessage(t *testing.T) {
 		{
 			name: "should return error if number of receiver selector is more than threshold",
 			n: notification.Notification{
-				ReceiverSelectors: []map[string]interface{}{
+				ReceiverSelectors: []map[string]any{
 					{
 						"k1": "v1",
 					},

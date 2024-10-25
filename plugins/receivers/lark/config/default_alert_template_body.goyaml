@@ -38,7 +38,6 @@
 {{- if .Data.playbook}}{{.Data.playbook}}{{end}}
 {{- end -}}
 username: "Siren"
-icon_emoji: ":Loudspeaker:"
 templatecolor: "{{template "lark.color" . }}"
 elements:
   - title: "title"

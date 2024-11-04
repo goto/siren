@@ -117,24 +117,3 @@ func (a ListString) Value() (driver.Value, error) {
 	}
 	return json.Marshal(a)
 }
-
-type ListStringAnyMap []map[string]any
-
-func (m *ListStringAnyMap) Scan(value interface{}) error {
-	if value == nil {
-		*m = make(ListStringAnyMap, 0)
-		return nil
-	}
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("failed type assertion to []byte")
-	}
-	return json.Unmarshal(b, m)
-}
-
-func (a ListStringAnyMap) Value() (driver.Value, error) {
-	if len(a) == 0 {
-		return nil, nil
-	}
-	return json.Marshal(a)
-}

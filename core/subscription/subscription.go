@@ -48,7 +48,6 @@ func (rcv *ReceiverView) FromReceiver(r receiver.Receiver) {
 	rcv.ParentID = r.ParentID
 	rcv.CreatedAt = r.CreatedAt
 	rcv.UpdatedAt = r.UpdatedAt
-
 }
 
 type Receiver struct {

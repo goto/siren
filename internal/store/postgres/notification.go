@@ -146,8 +146,8 @@ func (r *NotificationRepository) List(ctx context.Context, flt notification.Filt
 			return nil, err
 		}
 
-		recieverSelectors := fmt.Sprintf("[" + string(rs) + "]")
-		matchReceiverSelectorExpression := sq.Expr("receiver_selectors @> ?", recieverSelectors)
+		receiverSelectors := fmt.Sprintf("[" + string(rs) + "]")
+		matchReceiverSelectorExpression := sq.Expr("receiver_selectors @> ?", receiverSelectors)
 		queryBuilder = queryBuilder.Where(matchReceiverSelectorExpression)
 	}
 
@@ -176,15 +176,7 @@ func (r *NotificationRepository) List(ctx context.Context, flt notification.Filt
 		if err := rows.StructScan(&notificationModel); err != nil {
 			return nil, err
 		}
-
-		notificationDomain := notificationModel.ToDomain()
-
-		// Always ensure ReceiverSelectors is initialized
-		if notificationDomain.ReceiverSelectors == nil {
-			notificationDomain.ReceiverSelectors = []map[string]any{}
-		}
-
-		notificationsDomain = append(notificationsDomain, *notificationDomain)
+		notificationsDomain = append(notificationsDomain, *notificationModel.ToDomain())
 	}
 	return notificationsDomain, nil
 }

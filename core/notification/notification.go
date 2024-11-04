@@ -36,16 +36,16 @@ type Transactor interface {
 
 // Notification is a model of notification
 type Notification struct {
-	ID                string                   `json:"id"`
-	NamespaceID       uint64                   `json:"namespace_id"`
-	Type              string                   `json:"type"`
-	Data              map[string]any           `json:"data"`
-	Labels            map[string]string        `json:"labels"`
-	ValidDuration     time.Duration            `json:"valid_duration"`
-	Template          string                   `json:"template"`
-	UniqueKey         string                   `json:"unique_key"`
-	ReceiverSelectors []map[string]any `json:"receiver_selectors"`
-	CreatedAt         time.Time                `json:"created_at"`
+	ID                string            `json:"id"`
+	NamespaceID       uint64            `json:"namespace_id"`
+	Type              string            `json:"type"`
+	Data              map[string]any    `json:"data"`
+	Labels            map[string]string `json:"labels"`
+	ValidDuration     time.Duration     `json:"valid_duration"`
+	Template          string            `json:"template"`
+	UniqueKey         string            `json:"unique_key"`
+	ReceiverSelectors ReceiverSelectors `json:"receiver_selectors"`
+	CreatedAt         time.Time         `json:"created_at"`
 
 	// won't be stored in notification table, only to propagate this to notification_subscriber
 	AlertIDs []int64

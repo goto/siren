@@ -76,13 +76,13 @@ SET status = '%s', updated_at = now()
 WHERE id IN (
     SELECT id
     FROM %s
-    WHERE (status = '%s' OR status = '%s') AND retryable IS FALSE %s AND (expired_at < now() OR expired_at IS NULL) AND try_count < max_tries AND last_error IS NULL
+    WHERE status = '%s' AND retryable IS FALSE %s AND (expired_at < now() OR expired_at IS NULL) AND try_count < max_tries AND last_error IS NULL
     ORDER BY expired_at
     FOR UPDATE SKIP LOCKED
     LIMIT %d
 )
 RETURNING id, status, receiver_type, configs, details, last_error, max_tries, try_count, retryable, expired_at, created_at, updated_at
-`, MessageQueueTableFullName, notification.MessageStatusPending, MessageQueueTableFullName, notification.MessageStatusEnqueued, notification.MessageStatusPending, receiverTypesList, batchSize)
+`, MessageQueueTableFullName, notification.MessageStatusPending, MessageQueueTableFullName, notification.MessageStatusEnqueued, receiverTypesList, batchSize)
 }
 
 func getDLQDequeueQuery(batchSize int, receiverTypesList string) string {

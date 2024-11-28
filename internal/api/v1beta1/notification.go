@@ -54,7 +54,9 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 	for _, pbSelector := range req.GetReceivers() {
 		var mss = make(map[string]any)
 		for k, v := range pbSelector.AsMap() {
+			// skip if key is config
 			if k == "config" {
+				mss[k] = v
 				continue
 			}
 			vString, ok := v.(string)

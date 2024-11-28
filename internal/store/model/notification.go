@@ -9,16 +9,16 @@ import (
 )
 
 type Notification struct {
-	ID                string                  `db:"id"`
-	NamespaceID       sql.NullInt64           `db:"namespace_id"`
-	Type              string                  `db:"type"`
-	Data              pgc.StringAnyMap        `db:"data"`
-	Labels            pgc.StringStringMap     `db:"labels"`
-	ValidDuration     pgc.TimeDuration        `db:"valid_duration"`
-	UniqueKey         sql.NullString          `db:"unique_key"`
-	Template          sql.NullString          `db:"template"`
-	CreatedAt         time.Time               `db:"created_at"`
-	ReceiverSelectors pgc.ListStringStringMap `db:"receiver_selectors"`
+	ID                string               `db:"id"`
+	NamespaceID       sql.NullInt64        `db:"namespace_id"`
+	Type              string               `db:"type"`
+	Data              pgc.StringAnyMap     `db:"data"`
+	Labels            pgc.StringStringMap  `db:"labels"`
+	ValidDuration     pgc.TimeDuration     `db:"valid_duration"`
+	UniqueKey         sql.NullString       `db:"unique_key"`
+	Template          sql.NullString       `db:"template"`
+	CreatedAt         time.Time            `db:"created_at"`
+	ReceiverSelectors pgc.ListStringAnyMap `db:"receiver_selectors"`
 }
 
 func (n *Notification) FromDomain(d notification.Notification) {
@@ -47,13 +47,13 @@ func (n *Notification) FromDomain(d notification.Notification) {
 	}
 
 	n.CreatedAt = d.CreatedAt
-	n.ReceiverSelectors = d.ReceiverSelectors.ToMapString()
+	n.ReceiverSelectors = pgc.ListStringAnyMap(d.ReceiverSelectors)
 }
 
 func (n *Notification) ToDomain() *notification.Notification {
 	var rcvSelectors notification.ReceiverSelectors
 	if len(n.ReceiverSelectors) > 0 {
-		rcvSelectors.FromMapString(n.ReceiverSelectors)
+		rcvSelectors = []map[string]any(n.ReceiverSelectors)
 	}
 	return &notification.Notification{
 		ID:                n.ID,

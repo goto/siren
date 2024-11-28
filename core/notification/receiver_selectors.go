@@ -1,8 +1,6 @@
 package notification
 
 import (
-	"fmt"
-
 	"github.com/goto/siren/pkg/errors"
 )
 
@@ -41,27 +39,4 @@ func (rs ReceiverSelectors) parseAndValidate() ([]map[string]string, map[string]
 	}
 
 	return castedSelectors, selectorConfig, nil
-}
-
-func (rs *ReceiverSelectors) FromMapString(rsMapString []map[string]string) {
-	*rs = ReceiverSelectors{}
-	for _, s := range rsMapString {
-		dSelector := map[string]any{}
-		for k, v := range s {
-			dSelector[k] = v
-		}
-		*rs = append(*rs, dSelector)
-	}
-}
-
-func (rs ReceiverSelectors) ToMapString() []map[string]string {
-	rcvSelectors := []map[string]string{}
-	for _, s := range rs {
-		selector := map[string]string{}
-		for k, v := range s {
-			selector[k] = fmt.Sprintf("%v", v)
-		}
-		rcvSelectors = append(rcvSelectors, selector)
-	}
-	return rcvSelectors
 }

@@ -19,7 +19,11 @@ import (
 
 const notificationAPIScope = "notification_api"
 
-func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[string]string, labels map[string]string) error {
+func (s *GRPCServer) validatePostNotificationPayload(receiverSelectors []map[string]any, labels map[string]string) error {
+	if len(receiverSelectors) == 0 && len(labels) == 0 {
+		return errors.ErrInvalid.WithMsgf("receivers or labels must be provided")
+	}
+
 	if len(receiverSelectors) > 0 && len(labels) > 0 {
 		return errors.ErrInvalid.WithMsgf("receivers and labels cannot being used at the same time, should be used either one of them")
 	}
@@ -46,10 +50,15 @@ func (s *GRPCServer) PostNotification(ctx context.Context, req *sirenv1beta1.Pos
 		}
 	}
 
-	var receiverSelectors = []map[string]string{}
+	var receiverSelectors = []map[string]any{}
 	for _, pbSelector := range req.GetReceivers() {
-		var mss = make(map[string]string)
+		var mss = make(map[string]any)
 		for k, v := range pbSelector.AsMap() {
+			// skip if key is config
+			if k == "config" {
+				mss[k] = v
+				continue
+			}
 			vString, ok := v.(string)
 			if !ok {
 				err := errors.ErrInvalid.WithMsgf("invalid receiver selectors, value must be string but found %v", v)

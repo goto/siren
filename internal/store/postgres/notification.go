@@ -146,8 +146,8 @@ func (r *NotificationRepository) List(ctx context.Context, flt notification.Filt
 			return nil, err
 		}
 
-		recieverSelectors := fmt.Sprintf("[" + string(rs) + "]")
-		matchReceiverSelectorExpression := sq.Expr("receiver_selectors @> ?", recieverSelectors)
+		receiverSelectors := fmt.Sprintf("[" + string(rs) + "]")
+		matchReceiverSelectorExpression := sq.Expr("receiver_selectors @> ?", receiverSelectors)
 		queryBuilder = queryBuilder.Where(matchReceiverSelectorExpression)
 	}
 

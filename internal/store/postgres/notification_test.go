@@ -227,7 +227,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 						"label-key": "label-value",
 					},
 					Template: "",
-					ReceiverSelectors: []map[string]string{
+					ReceiverSelectors: []map[string]any{
 						{
 							"team":     "gotocompany-infra",
 							"severity": "WARNING",
@@ -320,7 +320,7 @@ func (s *NotificationRepositoryTestSuite) TestList() {
 						"label-key": "label-value",
 					},
 					Template: "",
-					ReceiverSelectors: []map[string]string{
+					ReceiverSelectors: []map[string]any{
 						{
 							"team":     "gotocompany-infra",
 							"severity": "WARNING",

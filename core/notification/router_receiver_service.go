@@ -26,8 +26,13 @@ func (s *RouterReceiverService) PrepareMetaMessages(ctx context.Context, n Notif
 		return nil, nil, errors.ErrInvalid.WithMsgf("number of receiver selectors should be less than or equal threshold %d", s.deps.Cfg.MaxNumReceiverSelectors)
 	}
 
+	selectors, selectorConfig, err := n.ReceiverSelectors.parseAndValidate()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	rcvs, err := s.deps.ReceiverService.List(ctx, receiver.Filter{
-		MultipleLabels: n.ReceiverSelectors,
+		MultipleLabels: selectors,
 		Expanded:       true,
 	})
 	if err != nil {
@@ -36,6 +41,24 @@ func (s *RouterReceiverService) PrepareMetaMessages(ctx context.Context, n Notif
 
 	if len(rcvs) == 0 {
 		return nil, nil, errors.ErrNotFound
+	}
+
+	if selectorConfig != nil && len(rcvs) > 1 {
+		return nil, nil, errors.ErrInvalid.WithMsgf("config override could only be used to 1 receiver, but got %d receiver", len(rcvs))
+	} else if selectorConfig != nil && len(rcvs) == 1 {
+		// config override flow
+		var rcvView = &subscription.ReceiverView{}
+		rcvView.FromReceiver(rcvs[0])
+		rcvView.Configurations = s.mergeReceiverConfig(rcvView.Configurations, selectorConfig)
+		metaMessages = append(metaMessages, n.MetaMessage(*rcvView))
+
+		notificationLogs = append(notificationLogs, log.Notification{
+			NamespaceID:    n.NamespaceID,
+			NotificationID: n.ID,
+			ReceiverID:     rcvs[0].ID,
+			AlertIDs:       n.AlertIDs,
+		})
+		return metaMessages, notificationLogs, nil
 	}
 
 	for _, rcv := range rcvs {
@@ -57,4 +80,16 @@ func (s *RouterReceiverService) PrepareMetaMessages(ctx context.Context, n Notif
 	}
 
 	return metaMessages, notificationLogs, nil
+}
+
+func (s *RouterReceiverService) mergeReceiverConfig(receiverConfig, selectorConfig map[string]any) map[string]any {
+	// override the existing config with the one from API if there is config clash
+	result := map[string]any{}
+	for k, v := range receiverConfig {
+		result[k] = v
+	}
+	for k, v := range selectorConfig {
+		result[k] = v
+	}
+	return result
 }

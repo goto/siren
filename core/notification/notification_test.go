@@ -41,7 +41,7 @@ func TestNotification_Validate(t *testing.T) {
 				Labels: map[string]string{
 					"receiver_id": "2",
 				},
-				ReceiverSelectors: []map[string]string{
+				ReceiverSelectors: []map[string]any{
 					{
 						"varkey1": "value1",
 					},

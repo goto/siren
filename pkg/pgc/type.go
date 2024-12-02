@@ -76,11 +76,11 @@ func (t TimeDuration) Value() (driver.Value, error) {
 	return time.Duration(t).String(), nil
 }
 
-type ListStringStringMap []map[string]string
+type ListStringAnyMap []map[string]any
 
-func (m *ListStringStringMap) Scan(value interface{}) error {
+func (m *ListStringAnyMap) Scan(value interface{}) error {
 	if value == nil {
-		m = new(ListStringStringMap)
+		m = new(ListStringAnyMap)
 		return nil
 	}
 	b, ok := value.([]byte)
@@ -90,7 +90,7 @@ func (m *ListStringStringMap) Scan(value interface{}) error {
 	return json.Unmarshal(b, &m)
 }
 
-func (a ListStringStringMap) Value() (driver.Value, error) {
+func (a ListStringAnyMap) Value() (driver.Value, error) {
 	if len(a) == 0 {
 		return nil, nil
 	}

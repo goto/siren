@@ -72,7 +72,7 @@ func (s *Service) CreateAlerts(ctx context.Context, providerType string, provide
 
 	if len(alerts) > 0 {
 		// Publish to notification service
-		ns, err := BuildNotifications(alerts, firingLen, time.Now(), s.cfg.GroupBy)
+		ns, err := BuildNotifications(alerts, firingLen, time.Now(), s.cfg.GroupBy, s.cfg.ValidDuration)
 		if err != nil {
 			s.logger.Warn("failed to build notifications from alert", "err", err, "alerts", alerts)
 		}
@@ -135,6 +135,7 @@ func BuildNotifications(
 	firingLen int,
 	createdTime time.Time,
 	groupByLabels []string,
+	validDuration time.Duration,
 ) ([]notification.Notification, error) {
 	if len(alerts) == 0 {
 		return nil, errors.New("empty alerts")
@@ -187,7 +188,7 @@ func BuildNotifications(
 			data[k] = v
 		}
 
-		notifications = append(notifications, notification.Notification{
+		ntf := notification.Notification{
 			NamespaceID: sampleAlert.NamespaceID,
 			Type:        notification.TypeAlert,
 			Data:        data,
@@ -196,7 +197,13 @@ func BuildNotifications(
 			UniqueKey:   structure.HashGroupKey(sampleAlert.GroupKey, hashKey),
 			CreatedAt:   createdTime,
 			AlertIDs:    alertIDs,
-		})
+		}
+
+		if validDuration != 0 {
+			ntf.ValidDuration = validDuration
+		}
+
+		notifications = append(notifications, ntf)
 	}
 
 	return notifications, nil

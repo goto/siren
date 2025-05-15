@@ -3,6 +3,7 @@ package lark
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
@@ -174,23 +175,35 @@ func (c *Client) checkLarkErrorRetryable(err error) error {
 	return retry.RetryableError{Err: err}
 }
 
-func (c *Client) getJoinedChannelsList(ctx context.Context, client *lark.Client) ([]*larkim.ListChat, error) {
-	list := []*larkim.ListChat{}
+func (c *Client) getJoinedChannelsList(ctx context.Context, client *lark.Client) (list []*larkim.ListChat, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic recovered in getJoinedChannelsList: %v\n%s", r, string(debug.Stack()))
+		}
+	}()
 
+	if client == nil {
+		return nil, fmt.Errorf("lark client is not initialized")
+	}
+
+	list = []*larkim.ListChat{}
 	curr := ""
+
 	for {
 		req := larkim.NewListChatReqBuilder().Limit(1000).PageToken(curr).Build()
-		resp, err := client.Im.Chat.List(context.Background(), req)
+		resp, err := client.Im.Chat.List(ctx, req)
 		if err != nil {
 			return list, err
 		}
 
 		list = append(list, resp.Data.Items...)
-		curr = *resp.Data.PageToken
-		if curr == "" {
+
+		if resp.Data.PageToken == nil || *resp.Data.PageToken == "" {
 			break
 		}
+		curr = *resp.Data.PageToken
 	}
+
 	return list, nil
 }
 

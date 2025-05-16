@@ -13,6 +13,7 @@ type Config struct {
 	MessageHandler          HandlerConfig `mapstructure:"message_handler" yaml:"message_handler"`
 	DLQHandler              HandlerConfig `mapstructure:"dlq_handler" yaml:"dlq_handler"`
 	GroupBy                 []string      `mapstructure:"group_by" yaml:"group_by"`
+	VerboseEnabled          bool          `mapstructure:"verbose" yaml:"verbose" default:"false"`
 }
 
 type HandlerConfig struct {

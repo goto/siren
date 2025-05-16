@@ -265,6 +265,7 @@ func TestService_BuildNotifications(t *testing.T) {
 						"status":            "FIRING",
 						"ak1":               "akv1",
 						"lk1":               "lv1",
+						"triggered_at":      time.Time{},
 					},
 					Labels: map[string]string{
 						"lk1": "lv1",
@@ -285,6 +286,7 @@ func TestService_BuildNotifications(t *testing.T) {
 						"ak2":               "akv2",
 						"lk1":               "lv1",
 						"lk2":               "lv2",
+						"triggered_at":      time.Time{},
 					},
 					Labels: map[string]string{
 						"lk1": "lv1",

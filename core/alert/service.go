@@ -176,6 +176,7 @@ func BuildNotifications(
 		data["status"] = sampleAlert.Status
 		data["generator_url"] = sampleAlert.GeneratorURL
 		data["num_alerts_firing"] = firingLen
+		data["triggered_at"] = sampleAlert.TriggeredAt
 
 		alertIDs := []int64{}
 
@@ -188,14 +189,15 @@ func BuildNotifications(
 		}
 
 		notifications = append(notifications, notification.Notification{
-			NamespaceID: sampleAlert.NamespaceID,
-			Type:        notification.TypeAlert,
-			Data:        data,
-			Labels:      sampleAlert.Labels,
-			Template:    template.ReservedName_SystemDefault,
-			UniqueKey:   structure.HashGroupKey(sampleAlert.GroupKey, hashKey),
-			CreatedAt:   createdTime,
-			AlertIDs:    alertIDs,
+			NamespaceID:    sampleAlert.NamespaceID,
+			Type:           notification.TypeAlert,
+			Data:           data,
+			Labels:         sampleAlert.Labels,
+			Template:       template.ReservedName_SystemDefault,
+			UniqueKey:      structure.HashGroupKey(sampleAlert.GroupKey, hashKey),
+			CreatedAt:      createdTime,
+			AlertIDs:       alertIDs,
+			VerboseEnabled: cfg.NotificationVerboseEnabled,
 		})
 	}
 

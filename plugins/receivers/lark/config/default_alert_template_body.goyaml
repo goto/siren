@@ -45,8 +45,9 @@ elements:
     text: |
 {{.Data.summary | indent 6}}
 {{- if .Data.debug}}
-{{ range $index, $element := .Data.debug }}- "{{ $index  }} = {{ $element }}"
-{{ end }}{{end}}
+{{- range $index, $element := .Data.debug }}
+{{ $index | indent 6}} = {{ $element }}"
+{{- end }}{{end}}
     actions:
     - tag: button
       type: primary

@@ -57,26 +57,12 @@ func (s *PluginService) PostHookDBTransformConfigs(ctx context.Context, configur
 	return mergedConfigs, nil
 }
 
-func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error) {
-	transformedConfigs, err := s.larkPluginService.PreHookQueueTransformConfigs(ctx, notificationConfigMap)
-	if err != nil {
-		return nil, err
-	}
-
-	var mergedConfigs = map[string]any{}
-	for k, v := range notificationConfigMap {
-		if value, ok := transformedConfigs[k]; ok {
-			mergedConfigs[k] = value
-		} else {
-			mergedConfigs[k] = v
-		}
-	}
-
-	return mergedConfigs, nil
-}
-
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
 	return s.larkPluginService.Send(ctx, notificationMessage)
+}
+
+func (s *PluginService) PostProcessMessage(mm notification.MetaMessage, m *notification.Message) *notification.Message {
+	return s.larkPluginService.PostProcessMessage(mm, m)
 }
 
 func (s *PluginService) GetSystemDefaultTemplate() string {

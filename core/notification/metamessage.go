@@ -17,5 +17,4 @@ type MetaMessage struct {
 	Labels           map[string]string
 	MergedLabels     map[string][]string
 	UniqueKey        string
-	VerboseEnabled   bool
 }

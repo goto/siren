@@ -22,11 +22,10 @@ func (c *ReceiverConfig) Validate() error {
 
 func (c *ReceiverConfig) AsMap() map[string]any {
 	return map[string]any{
-		"client_id":      c.LarkReceiverConfig.ClientID,
-		"client_secret":  c.LarkReceiverConfig.ClientSecret,
-		"channel_name":   c.ChannelName,
-		"channel_type":   c.ChannelType,
-		"valid_duration": c.LarkReceiverConfig.ValidDuration,
+		"client_id":     c.LarkReceiverConfig.ClientID,
+		"client_secret": c.LarkReceiverConfig.ClientSecret,
+		"channel_name":  c.ChannelName,
+		"channel_type":  c.ChannelType,
 	}
 }
 

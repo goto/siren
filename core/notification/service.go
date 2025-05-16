@@ -274,6 +274,7 @@ func (s *Service) RenderMessages(ctx context.Context, metaMessages []MetaMessage
 
 		message, err := InitMessageByMetaMessage(
 			ctx,
+			s.deps.Cfg,
 			notifierPlugin,
 			s.deps.TemplateService,
 			mm,

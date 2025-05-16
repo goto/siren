@@ -27,8 +27,7 @@ func (c AppConfig) Validate() error {
 
 // TODO need to support versioning later v1 and v2
 type ReceiverConfig struct {
-	ServiceKey    secret.MaskableString `mapstructure:"service_key"`
-	ValidDuration time.Duration         `mapstructure:"valid_duration" yaml:"valid_duration"`
+	ServiceKey secret.MaskableString `mapstructure:"service_key"`
 }
 
 func (c *ReceiverConfig) Validate() error {
@@ -40,8 +39,7 @@ func (c *ReceiverConfig) Validate() error {
 
 func (c *ReceiverConfig) AsMap() map[string]any {
 	return map[string]any{
-		"service_key":    c.ServiceKey,
-		"valid_duration": c.ValidDuration,
+		"service_key": c.ServiceKey,
 	}
 }
 

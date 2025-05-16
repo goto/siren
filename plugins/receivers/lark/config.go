@@ -34,9 +34,8 @@ func (c *LarkCredentialConfig) Validate() error {
 
 // ReceiverConfig is a stored config for a lark receiver
 type ReceiverConfig struct {
-	ClientID      secret.MaskableString `mapstructure:"client_id"`
-	ClientSecret  secret.MaskableString `mapstructure:"client_secret"`
-	ValidDuration time.Duration         `mapstructure:"valid_duration" yaml:"valid_duration"`
+	ClientID     secret.MaskableString `mapstructure:"client_id"`
+	ClientSecret secret.MaskableString `mapstructure:"client_secret"`
 }
 
 func (c *ReceiverConfig) Validate() error {
@@ -48,9 +47,8 @@ func (c *ReceiverConfig) Validate() error {
 
 func (c *ReceiverConfig) AsMap() map[string]any {
 	return map[string]any{
-		"client_id":      c.ClientID,
-		"client_secret":  c.ClientSecret,
-		"valid_duration": c.ValidDuration,
+		"client_id":     c.ClientID,
+		"client_secret": c.ClientSecret,
 	}
 }
 

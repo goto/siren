@@ -11,6 +11,7 @@ type Notifier interface {
 	PostHookQueueTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error)
 	GetSystemDefaultTemplate() string
 	Send(ctx context.Context, message Message) (bool, error)
+	PostProcessMessage(MetaMessage, *Message) *Message
 }
 
 type Queuer interface {

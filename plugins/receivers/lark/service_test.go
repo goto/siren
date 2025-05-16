@@ -4,7 +4,6 @@ import (
 	"context"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/goto/salt/log"
 	"github.com/goto/siren/core/notification"
@@ -210,9 +209,8 @@ func TestService_PreHookQueueTransformConfigs(t *testing.T) {
 				e.EXPECT().Encrypt(mock.AnythingOfType("secret.MaskableString")).Return(secret.MaskableString("maskable-token"), nil)
 			},
 			want: map[string]any{
-				"client_secret":  secret.MaskableString("maskable-token"),
-				"client_id":      secret.MaskableString("maskable-token"),
-				"valid_duration": time.Duration(0),
+				"client_secret": secret.MaskableString("maskable-token"),
+				"client_id":     secret.MaskableString("maskable-token"),
 			},
 		},
 	}
@@ -282,11 +280,10 @@ func TestService_PostHookQueueTransformConfigs(t *testing.T) {
 				e.EXPECT().Decrypt(mock.AnythingOfType("secret.MaskableString")).Return(secret.MaskableString("maskable-token"), nil)
 			},
 			want: map[string]any{
-				"client_id":      secret.MaskableString("maskable-token"),
-				"client_secret":  secret.MaskableString("maskable-token"),
-				"channel_name":   "channel",
-				"channel_type":   "",
-				"valid_duration": time.Duration(0),
+				"client_id":     secret.MaskableString("maskable-token"),
+				"client_secret": secret.MaskableString("maskable-token"),
+				"channel_name":  "channel",
+				"channel_type":  "",
 			},
 		},
 	}

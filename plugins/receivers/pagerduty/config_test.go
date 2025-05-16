@@ -2,7 +2,6 @@ package pagerduty
 
 import (
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/goto/siren/pkg/secret"
@@ -75,8 +74,7 @@ func TestNotificationConfig(t *testing.T) {
 		}
 
 		if diff := cmp.Diff(map[string]any{
-			"service_key":    secret.MaskableString("service_key"),
-			"valid_duration": time.Duration(0),
+			"service_key": secret.MaskableString("service_key"),
 		}, nc.AsMap()); diff != "" {
 			t.Errorf("result not match\n%v", diff)
 		}

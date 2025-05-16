@@ -24,6 +24,7 @@ const (
 // PluginService is a plugin service layer for lark
 type PluginService struct {
 	base.UnimplementedService
+	appCfg       AppConfig
 	client       LarkCaller
 	cryptoClient Encryptor
 	httpClient   *httpclient.Client
@@ -47,6 +48,8 @@ func NewPluginService(cfg AppConfig, logger log.Logger, cryptoClient Encryptor, 
 	if s.client == nil {
 		s.client = NewClient(cfg, logger, ClientWithHTTPClient(s.httpClient), ClientWithRetrier(s.retrier))
 	}
+
+	s.appCfg = cfg
 
 	return s
 }
@@ -187,6 +190,8 @@ func (s *PluginService) BuildData(ctx context.Context, configurations map[string
 }
 
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
+	notificationMessage.UpdateValidDuration(s.appCfg.ValidDuration)
+
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationMessage.Configs, notificationConfig); err != nil {
 		return false, err

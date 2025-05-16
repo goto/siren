@@ -76,7 +76,7 @@ SET status = '%s', updated_at = now()
 WHERE id IN (
     SELECT id
     FROM %s
-    WHERE status = '%s' AND retryable IS FALSE %s AND (expired_at < now() OR expired_at IS NULL) AND try_count < max_tries AND last_error IS NULL
+    WHERE status = '%s' AND retryable IS FALSE %s AND try_count < max_tries AND last_error IS NULL
     ORDER BY expired_at
     FOR UPDATE SKIP LOCKED
     LIMIT %d
@@ -92,7 +92,7 @@ SET status = '%s', updated_at = now()
 WHERE id IN (
     SELECT id
     FROM %s
-    WHERE (status = '%s' OR status = '%s') AND retryable IS TRUE  %s AND (expired_at < now() OR expired_at IS NULL) AND try_count < max_tries AND last_error IS NOT NULL
+    WHERE (status = '%s' OR status = '%s') AND retryable IS TRUE %s AND try_count < max_tries AND last_error IS NOT NULL
     ORDER BY expired_at
     FOR UPDATE SKIP LOCKED
     LIMIT %d
@@ -231,7 +231,7 @@ func (q *Queue) ErrorCallback(ctx context.Context, ms notification.Message) erro
 	if rowsAffected == 0 {
 		return errors.New("no rows affected when marking row as failed")
 	}
-	q.logger.Debug("marked a message as failed with", "strategy", q.strategy, "id", ms.ID)
+	q.logger.Debug("marked a message with", "status", ms.Status, "strategy", q.strategy, "id", ms.ID)
 	return nil
 }
 

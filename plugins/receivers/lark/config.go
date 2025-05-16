@@ -2,6 +2,7 @@ package lark
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
@@ -11,9 +12,10 @@ import (
 
 // AppConfig is a config loaded when siren is started
 type AppConfig struct {
-	APIHost    string            `mapstructure:"api_host"`
-	Retry      retry.Config      `mapstructure:"retry"`
-	HTTPClient httpclient.Config `mapstructure:"http_client"`
+	APIHost       string            `mapstructure:"api_host"`
+	Retry         retry.Config      `mapstructure:"retry"`
+	HTTPClient    httpclient.Config `mapstructure:"http_client"`
+	ValidDuration time.Duration     `mapstructure:"valid_duration" yaml:"valid_duration"`
 }
 
 // LarkCredentialConfig is config that needs to be passed when a new lark

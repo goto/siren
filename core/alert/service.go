@@ -72,7 +72,7 @@ func (s *Service) CreateAlerts(ctx context.Context, providerType string, provide
 
 	if len(alerts) > 0 {
 		// Publish to notification service
-		ns, err := BuildNotifications(alerts, firingLen, time.Now(), s.cfg.GroupBy)
+		ns, err := BuildNotifications(s.cfg, alerts, firingLen, time.Now())
 		if err != nil {
 			s.logger.Warn("failed to build notifications from alert", "err", err, "alerts", alerts)
 		}
@@ -131,16 +131,16 @@ func (s *Service) getProviderPluginService(providerType string) (AlertTransforme
 // - alertname
 // - (others labels defined in rules)
 func BuildNotifications(
+	cfg Config,
 	alerts []Alert,
 	firingLen int,
 	createdTime time.Time,
-	groupByLabels []string,
 ) ([]notification.Notification, error) {
 	if len(alerts) == 0 {
 		return nil, errors.New("empty alerts")
 	}
 
-	alertsMap, err := structure.GroupByLabels(alerts, groupByLabels, func(a Alert) map[string]string { return a.Labels })
+	alertsMap, err := structure.GroupByLabels(alerts, cfg.GroupBy, func(a Alert) map[string]string { return a.Labels })
 	if err != nil {
 		return nil, err
 	}

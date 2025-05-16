@@ -61,6 +61,10 @@ func (s *PluginService) Send(ctx context.Context, notificationMessage notificati
 	return s.larkPluginService.Send(ctx, notificationMessage)
 }
 
+func (s *PluginService) PostProcessMessage(mm notification.MetaMessage, m *notification.Message) *notification.Message {
+	return s.larkPluginService.PostProcessMessage(mm, m)
+}
+
 func (s *PluginService) GetSystemDefaultTemplate() string {
 	return s.larkPluginService.GetSystemDefaultTemplate()
 }

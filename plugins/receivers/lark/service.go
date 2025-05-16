@@ -131,6 +131,7 @@ func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, config
 
 	return receiverConfig.AsMap(), nil
 }
+
 func (s *PluginService) PostHookQueueTransformConfigs(ctx context.Context, notificationConfigMap map[string]any) (map[string]any, error) {
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationConfigMap, notificationConfig); err != nil {
@@ -190,8 +191,6 @@ func (s *PluginService) BuildData(ctx context.Context, configurations map[string
 }
 
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
-	notificationMessage.UpdateValidDuration(s.appCfg.ValidDuration)
-
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationMessage.Configs, notificationConfig); err != nil {
 		return false, err
@@ -218,6 +217,13 @@ func (s *PluginService) Send(ctx context.Context, notificationMessage notificati
 	}
 
 	return false, nil
+}
+
+func (s *PluginService) PostProcessMessage(mm notification.MetaMessage, m *notification.Message) *notification.Message {
+	if s.appCfg.ValidDuration != 0 && mm.ValidDuration == 0 {
+		m.ExpiredAt = m.CreatedAt.Add(s.appCfg.ValidDuration)
+	}
+	return m
 }
 
 func (s *PluginService) GetSystemDefaultTemplate() string {

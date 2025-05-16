@@ -53,7 +53,7 @@ update-swagger-md:
 	@npx swagger-markdown -i proto/siren.swagger.yaml -o docs/docs/reference/api.md
 
 install: ## install required dependencies
-	go get -d github.com/vektra/mockery/v2@v2.40.1
+	go get -d github.com/vektra/mockery/v2@v2.53.3
 	go get -d google.golang.org/protobuf/cmd/protoc-gen-go@v1.32.0
 	go get google.golang.org/protobuf/proto@v1.32.0
 	go get google.golang.org/grpc@v1.61.0

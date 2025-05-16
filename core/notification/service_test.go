@@ -209,6 +209,10 @@ func TestService_DispatchFailure(t *testing.T) {
 				}, nil)
 				no.EXPECT().GetSystemDefaultTemplate().Return("")
 				no.EXPECT().PreHookQueueTransformConfigs(mock.AnythingOfType("context.todoCtx"), mock.Anything).Return(map[string]any{}, nil)
+				no.EXPECT().PostProcessMessage(mock.AnythingOfType("notification.MetaMessage"), mock.AnythingOfType("*notification.Message")).Return(
+					&notification.Message{
+						Status:       "enqueued",
+						ReceiverType: "slack"})
 				l.EXPECT().LogNotifications(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("log.Notification")).Return(errors.New("some error"))
 			},
 			wantErrStr: "failed logging notifications: some error",
@@ -243,6 +247,10 @@ func TestService_DispatchFailure(t *testing.T) {
 				}, []log.Notification{}, nil)
 				no.EXPECT().GetSystemDefaultTemplate().Return("")
 				no.EXPECT().PreHookQueueTransformConfigs(mock.AnythingOfType("context.todoCtx"), mock.Anything).Return(map[string]any{}, nil)
+				no.EXPECT().PostProcessMessage(mock.AnythingOfType("notification.MetaMessage"), mock.AnythingOfType("*notification.Message")).Return(
+					&notification.Message{
+						Status:       "enqueued",
+						ReceiverType: "slack"})
 				l.EXPECT().LogNotifications(mock.AnythingOfType("context.todoCtx")).Return(nil)
 				q.EXPECT().Enqueue(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("notification.Message")).Return(errors.New("some error"))
 			},
@@ -350,6 +358,14 @@ func TestService_DispatchSuccess(t *testing.T) {
 				}, []log.Notification{}, nil)
 				no.EXPECT().GetSystemDefaultTemplate().Return("")
 				no.EXPECT().PreHookQueueTransformConfigs(mock.AnythingOfType("context.todoCtx"), mock.Anything).Return(map[string]any{}, nil)
+				no.EXPECT().PostProcessMessage(mock.AnythingOfType("notification.MetaMessage"), mock.AnythingOfType("*notification.Message")).Return(
+					&notification.Message{
+						Status:       "enqueued",
+						ReceiverType: "slack",
+						Configs: map[string]any{
+							"client_id": "123123",
+						},
+					})
 				l.EXPECT().LogNotifications(mock.AnythingOfType("context.todoCtx")).Return(nil)
 				q.EXPECT().Enqueue(mock.AnythingOfType("context.todoCtx"), mock.AnythingOfType("notification.Message"), mock.AnythingOfType("notification.Message")).Return(nil)
 			},

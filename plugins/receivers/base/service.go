@@ -34,6 +34,10 @@ func (s *UnimplementedService) GetSystemDefaultTemplate() string {
 	return ""
 }
 
+func (s *UnimplementedService) PostProcessMessage(mm notification.MetaMessage, m *notification.Message) *notification.Message {
+	return m
+}
+
 func (s *UnimplementedService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
 	return false, plugins.ErrNotImplemented
 }

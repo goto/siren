@@ -82,12 +82,6 @@ type Message struct {
 	expiryDuration time.Duration
 }
 
-func (m *Message) UpdateValidDuration(dur time.Duration) {
-	if dur != 0 {
-		m.ExpiredAt = m.CreatedAt.Add(m.expiryDuration)
-	}
-}
-
 // Initialize initializes the message with some default value
 // or the customized value
 func InitMessage(
@@ -135,6 +129,8 @@ func InitMessage(
 	if n.Template == "" {
 		return Message{}, errors.ErrInvalid.WithMsgf("found no template, template is mandatory")
 	}
+
+	// Rendering message with template
 	//TODO fetch template if any, if not exist, check provider type, if exist use the default template, if not pass as-is
 	// if there is template, render and replace detail with the new one
 
@@ -189,6 +185,7 @@ func InitMessage(
 
 func InitMessageByMetaMessage(
 	ctx context.Context,
+	cfg Config,
 	notifierPlugin Notifier,
 	templateService TemplateService,
 	mm MetaMessage,
@@ -232,7 +229,7 @@ func InitMessageByMetaMessage(
 	}
 
 	// collect all debug information under `Details.debug`
-	if mm.VerboseEnabled {
+	if cfg.Message.VerboseEnabled {
 		mm.Data["debug"] = map[string]any{
 			"triggered_at": mm.Data["triggered_at"],
 		}
@@ -287,7 +284,8 @@ func InitMessageByMetaMessage(
 
 	m.Details[DetailsKeyNotificationType] = mm.NotificationType
 
-	return *m, nil
+	newMessage := notifierPlugin.PostProcessMessage(mm, m)
+	return *newMessage, nil
 }
 
 // MarkFailed update message to the failed state

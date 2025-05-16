@@ -13,7 +13,7 @@ type Config struct {
 	MessageHandler          HandlerConfig `mapstructure:"message_handler" yaml:"message_handler"`
 	DLQHandler              HandlerConfig `mapstructure:"dlq_handler" yaml:"dlq_handler"`
 	GroupBy                 []string      `mapstructure:"group_by" yaml:"group_by"`
-	VerboseEnabled          bool          `mapstructure:"verbose" yaml:"verbose" default:"false"`
+	Message                 MessageConfig `mapstructure:"message" yaml:"message"`
 }
 
 type HandlerConfig struct {
@@ -21,4 +21,8 @@ type HandlerConfig struct {
 	PollDuration  time.Duration `mapstructure:"poll_duration" yaml:"poll_duration" default:"5s"`
 	ReceiverTypes []string      `mapstructure:"receiver_types" yaml:"receiver_types"`
 	BatchSize     int           `mapstructure:"batch_size" yaml:"batch_size" default:"1"`
+}
+
+type MessageConfig struct {
+	VerboseEnabled bool `mapstructure:"verbose_enabled" yaml:"verbose_enabled" default:"false"`
 }

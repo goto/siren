@@ -64,7 +64,6 @@ func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, notifi
 }
 
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
-	notificationMessage.UpdateValidDuration(s.appCfg.ValidDuration)
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationMessage.Configs, notificationConfig); err != nil {
 		return false, err
@@ -85,6 +84,17 @@ func (s *PluginService) Send(ctx context.Context, notificationMessage notificati
 	}
 
 	return false, nil
+}
+
+func (s *PluginService) PostProcessMessage(mm notification.MetaMessage, m *notification.Message) *notification.Message {
+	// if the resolved message is not being sent, alert will keep being retriggered
+	// on pagerduty side until user resolves it manually
+	if s.appCfg.ValidDuration != 0 && mm.ValidDuration == 0 {
+		if mm.Data != nil && mm.Data["status"] != "resolved" {
+			m.ExpiredAt = m.CreatedAt.Add(s.appCfg.ValidDuration)
+		}
+	}
+	return m
 }
 
 func (s *PluginService) GetSystemDefaultTemplate() string {

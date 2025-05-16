@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/pkg/secret"
 	"github.com/goto/siren/plugins/receivers/lark"
 	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
@@ -24,7 +25,7 @@ func TestClient_GetWorkspaceChannels(t *testing.T) {
 
 		}))
 
-		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL})
+		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL}, log.NewNoop())
 		channels, err := c.GetWorkspaceChannels(context.Background(), clientId, clientSecret)
 
 		assert.EqualError(t, err, "failed to fetch joined channel list: unexpected end of JSON input")
@@ -39,7 +40,7 @@ func TestClient_NotifyChannel(t *testing.T) {
 	var clientSecret = secret.MaskableString("test-secret")
 
 	t.Run("return error when message receiver type is wrong", func(t *testing.T) {
-		c := lark.NewClient(lark.AppConfig{})
+		c := lark.NewClient(lark.AppConfig{}, log.NewNoop())
 		err := c.Notify(context.Background(),
 			lark.NotificationConfig{
 				ReceiverConfig: lark.ReceiverConfig{
@@ -57,7 +58,7 @@ func TestClient_NotifyChannel(t *testing.T) {
 			w.WriteHeader(http.StatusBadGateway)
 		}))
 
-		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL})
+		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL}, log.NewNoop())
 		err := c.Notify(
 			context.Background(),
 			lark.NotificationConfig{
@@ -107,7 +108,7 @@ func TestClient_NotifyChannel(t *testing.T) {
 			}
 		}))
 
-		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL})
+		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL}, log.NewNoop())
 		err := c.Notify(
 			context.Background(),
 			lark.NotificationConfig{
@@ -158,7 +159,7 @@ func TestClient_NotifyChannel(t *testing.T) {
 			}
 		}))
 
-		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL})
+		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL}, log.NewNoop())
 		err := c.Notify(
 			context.Background(),
 			lark.NotificationConfig{
@@ -212,7 +213,7 @@ func TestClient_NotifyUser(t *testing.T) {
 			}
 		}))
 
-		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL})
+		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL}, log.NewNoop())
 		err := c.Notify(
 			context.Background(),
 			lark.NotificationConfig{
@@ -261,7 +262,7 @@ func TestClient_NotifyUser(t *testing.T) {
 			}
 		}))
 
-		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL})
+		c := lark.NewClient(lark.AppConfig{APIHost: testServer.URL}, log.NewNoop())
 		err := c.Notify(
 			context.Background(),
 			lark.NotificationConfig{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
 	"github.com/goto/siren/pkg/retry"
@@ -45,13 +46,15 @@ type Client struct {
 	cfg        AppConfig
 	httpClient *httpclient.Client
 	retrier    retry.Runner
+	logger     log.Logger
 }
 
 // NewClient is a constructor to create lark client.
 // this version uses lark v3 SDK.
-func NewClient(cfg AppConfig, opts ...ClientOption) *Client {
+func NewClient(cfg AppConfig, logger log.Logger, opts ...ClientOption) *Client {
 	c := &Client{
-		cfg: cfg,
+		cfg:    cfg,
+		logger: logger,
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -161,12 +164,16 @@ func (c *Client) sendMessageContext(ctx context.Context, client *lark.Client, re
 			Build()).
 		Build()
 
-	resp, err := client.Im.Message.Create(context.Background(), req)
+	resp, err := client.Im.Message.Create(ctx, req)
 	if err != nil {
 		return c.checkLarkErrorRetryable(err)
 	}
-	fmt.Println(larkcore.Prettify(resp.Data))
 
+	if !resp.Success() {
+		return fmt.Errorf("failed to send message: %s", larkcore.Prettify(resp))
+	}
+
+	c.logger.Debug("Lark client.Im.Message.Create response", "response", larkcore.Prettify(resp.Data))
 	return nil
 }
 
@@ -174,23 +181,29 @@ func (c *Client) checkLarkErrorRetryable(err error) error {
 	return retry.RetryableError{Err: err}
 }
 
-func (c *Client) getJoinedChannelsList(ctx context.Context, client *lark.Client) ([]*larkim.ListChat, error) {
-	list := []*larkim.ListChat{}
-
+func (c *Client) getJoinedChannelsList(ctx context.Context, client *lark.Client) (list []*larkim.ListChat, err error) {
+	list = []*larkim.ListChat{}
 	curr := ""
+
 	for {
 		req := larkim.NewListChatReqBuilder().Limit(1000).PageToken(curr).Build()
-		resp, err := client.Im.Chat.List(context.Background(), req)
+		resp, err := client.Im.Chat.List(ctx, req)
 		if err != nil {
 			return list, err
 		}
 
+		if !resp.Success() {
+			return nil, fmt.Errorf("failed to fetch channel list: %s", larkcore.Prettify(resp))
+		}
+
 		list = append(list, resp.Data.Items...)
-		curr = *resp.Data.PageToken
-		if curr == "" {
+
+		if resp.Data.PageToken == nil || *resp.Data.PageToken == "" {
 			break
 		}
+		curr = *resp.Data.PageToken
 	}
+
 	return list, nil
 }
 
@@ -214,6 +227,10 @@ func (c *Client) getUserByEmail(ctx context.Context, email string, client *lark.
 	resp, err := client.Contact.User.BatchGetId(ctx, req)
 	if err != nil {
 		return "", err
+	}
+
+	if !resp.Success() {
+		return "", fmt.Errorf("failed to fetch user by email: %s", larkcore.Prettify(resp))
 	}
 
 	userinfo := resp.Data.UserList[len(resp.Data.UserList)-1]

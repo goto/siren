@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/core/notification"
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/plugins/receivers/base"
@@ -18,9 +19,9 @@ type PluginService struct {
 }
 
 // NewPluginService returns lark channel plugin service struct. This service implement [receiver.Resolver] and [notification.Notifier] interface.
-func NewPluginService(cfg lark.AppConfig, cryptoClient lark.Encryptor, opts ...lark.ServiceOption) *PluginService {
+func NewPluginService(cfg lark.AppConfig, logger log.Logger, cryptoClient lark.Encryptor, opts ...lark.ServiceOption) *PluginService {
 	return &PluginService{
-		larkPluginService: lark.NewPluginService(cfg, cryptoClient, opts...),
+		larkPluginService: lark.NewPluginService(cfg, logger, cryptoClient, opts...),
 	}
 }
 

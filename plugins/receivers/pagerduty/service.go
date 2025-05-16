@@ -87,8 +87,12 @@ func (s *PluginService) Send(ctx context.Context, notificationMessage notificati
 }
 
 func (s *PluginService) PostProcessMessage(mm notification.MetaMessage, m *notification.Message) *notification.Message {
+	// if the resolved message is not being sent, alert will keep being retriggered
+	// on pagerduty side until user resolves it manually
 	if s.appCfg.ValidDuration != 0 && mm.ValidDuration == 0 {
-		m.ExpiredAt = m.CreatedAt.Add(s.appCfg.ValidDuration)
+		if mm.Data != nil && mm.Data["status"] != "resolved" {
+			m.ExpiredAt = m.CreatedAt.Add(s.appCfg.ValidDuration)
+		}
 	}
 	return m
 }

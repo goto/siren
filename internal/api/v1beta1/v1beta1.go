@@ -51,12 +51,12 @@ func NewGRPCServer(
 	opts ...GRPCServerOption) (*GRPCServer, error) {
 
 	metricBulkNotificationsCount, err := otel.Meter("github.com/goto/siren/internal/api").
-		Int64Gauge("api.bulknotifications.notifications")
+		Int64Gauge("siren.api.bulknotifications.notifications")
 	if err != nil {
 		return nil, err
 	}
 	metricNotificationReceiverSelectorCount, err := otel.Meter("github.com/goto/siren/internal/api").
-		Int64Gauge("api.notification.receiverselectors")
+		Int64Gauge("siren.api.notification.receiverselectors")
 	if err != nil {
 		return nil, err
 	}

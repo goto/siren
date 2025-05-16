@@ -125,8 +125,9 @@ func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, config
 	}
 
 	receiverConfig := ReceiverConfig{
-		ClientID:     encryptedClientId,
-		ClientSecret: encryptedClientSecret,
+		ClientID:      encryptedClientId,
+		ClientSecret:  encryptedClientSecret,
+		ValidDuration: s.appCfg.ValidDuration,
 	}
 
 	return receiverConfig.AsMap(), nil
@@ -190,8 +191,6 @@ func (s *PluginService) BuildData(ctx context.Context, configurations map[string
 }
 
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
-	notificationMessage.UpdateValidDuration(s.appCfg.ValidDuration)
-
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationMessage.Configs, notificationConfig); err != nil {
 		return false, err

@@ -2,6 +2,7 @@ package larkchannel_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/goto/siren/pkg/secret"
@@ -76,8 +77,9 @@ func TestNotificationConfig(t *testing.T) {
 		nc := larkchannel.NotificationConfig{
 			ReceiverConfig: larkchannel.ReceiverConfig{
 				LarkReceiverConfig: lark.ReceiverConfig{
-					ClientID:     secret.MaskableString("foo"),
-					ClientSecret: "foo",
+					ClientID:      secret.MaskableString("foo"),
+					ClientSecret:  "foo",
+					ValidDuration: time.Duration(0),
 				},
 				ChannelName: "channel",
 			},

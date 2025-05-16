@@ -60,11 +60,12 @@ func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, notifi
 		return nil, err
 	}
 
+	notificationConfig.ValidDuration = s.appCfg.ValidDuration
+
 	return notificationConfig.AsMap(), nil
 }
 
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
-	notificationMessage.UpdateValidDuration(s.appCfg.ValidDuration)
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationMessage.Configs, notificationConfig); err != nil {
 		return false, err

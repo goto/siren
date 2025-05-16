@@ -2,6 +2,7 @@ package larkchannel_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/goto/siren/pkg/secret"
@@ -76,18 +77,20 @@ func TestNotificationConfig(t *testing.T) {
 		nc := larkchannel.NotificationConfig{
 			ReceiverConfig: larkchannel.ReceiverConfig{
 				LarkReceiverConfig: lark.ReceiverConfig{
-					ClientID:     secret.MaskableString("foo"),
-					ClientSecret: "foo",
+					ClientID:      secret.MaskableString("foo"),
+					ClientSecret:  "foo",
+					ValidDuration: time.Duration(0),
 				},
 				ChannelName: "channel",
 			},
 		}
 
 		if diff := cmp.Diff(map[string]any{
-			"channel_name":  "channel",
-			"channel_type":  "",
-			"client_id":     secret.MaskableString("foo"),
-			"client_secret": secret.MaskableString("foo"),
+			"channel_name":   "channel",
+			"channel_type":   "",
+			"client_id":      secret.MaskableString("foo"),
+			"client_secret":  secret.MaskableString("foo"),
+			"valid_duration": time.Duration(0),
 		}, nc.AsMap()); diff != "" {
 			t.Errorf("result not match\n%v", diff)
 		}

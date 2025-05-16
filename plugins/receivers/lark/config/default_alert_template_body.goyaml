@@ -44,6 +44,9 @@ elements:
     pretext: "{{template "lark.pretext" . }}"
     text: |
 {{.Data.summary | indent 6}}
+{{- if .Data.debug}}
+{{ range $index, $element := .Data.debug }}- "{{ $index  }} = {{ $element }}"
+{{ end }}{{end}}
     actions:
     - tag: button
       type: primary

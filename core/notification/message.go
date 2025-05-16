@@ -230,6 +230,14 @@ func InitMessageByMetaMessage(
 	if mm.Template == "" {
 		return Message{}, errors.ErrInvalid.WithMsgf("found no template, template is mandatory")
 	}
+
+	// collect all debug information under `Details.debug`
+	if mm.VerboseEnabled {
+		mm.Data["debug"] = map[string]any{
+			"triggered_at": mm.Data["triggered_at"],
+		}
+	}
+
 	//TODO fetch template if any, if not exist, check provider type, if exist use the default template, if not pass as-is
 	// if there is template, render and replace detail with the new one
 

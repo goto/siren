@@ -48,7 +48,8 @@ type Notification struct {
 	CreatedAt         time.Time         `json:"created_at"`
 
 	// won't be stored in notification table, only to propagate this to notification_subscriber
-	AlertIDs []int64
+	AlertIDs       []int64
+	VerboseEnabled bool
 }
 
 func (n *Notification) EnrichID(id string) {
@@ -91,6 +92,7 @@ func (n Notification) MetaMessage(receiverView subscription.ReceiverView) MetaMe
 		Template:         n.Template,
 		Labels:           n.Labels,
 		UniqueKey:        n.UniqueKey,
+		VerboseEnabled:   n.VerboseEnabled,
 	}
 
 	if receiverView.SubscriptionID != 0 {

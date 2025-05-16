@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/core/notification"
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/retry"
@@ -74,7 +75,7 @@ func TestService_Send(t *testing.T) {
 				tt.setup(mockLarkClient)
 			}
 
-			s := larkchannel.NewPluginService(lark.AppConfig{}, nil, lark.WithLarkClient(mockLarkClient))
+			s := larkchannel.NewPluginService(lark.AppConfig{}, log.NewNoop(), nil, lark.WithLarkClient(mockLarkClient))
 
 			got, err := s.Send(context.TODO(), tt.notificationMessage)
 			if (err != nil) != tt.wantErr {
@@ -150,7 +151,7 @@ func TestService_PostHookDBTransformConfigs(t *testing.T) {
 				tt.setup(mockEncryptor)
 			}
 
-			s := larkchannel.NewPluginService(lark.AppConfig{}, mockEncryptor)
+			s := larkchannel.NewPluginService(lark.AppConfig{}, log.NewNoop(), mockEncryptor)
 			got, err := s.PostHookDBTransformConfigs(context.TODO(), tt.notificationConfigMap)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Service.PostHookDBTransformConfigs() error = %v, wantErr %v", err, tt.wantErr)

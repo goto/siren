@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/core/notification"
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/httpclient"
@@ -30,7 +31,7 @@ type PluginService struct {
 }
 
 // NewPluginService returns lark plugin service struct. This service implement [receiver.Resolver] and [notification.Notifier] interface.
-func NewPluginService(cfg AppConfig, cryptoClient Encryptor, opts ...ServiceOption) *PluginService {
+func NewPluginService(cfg AppConfig, logger log.Logger, cryptoClient Encryptor, opts ...ServiceOption) *PluginService {
 	s := &PluginService{}
 
 	for _, opt := range opts {
@@ -44,7 +45,7 @@ func NewPluginService(cfg AppConfig, cryptoClient Encryptor, opts ...ServiceOpti
 	}
 
 	if s.client == nil {
-		s.client = NewClient(cfg, ClientWithHTTPClient(s.httpClient), ClientWithRetrier(s.retrier))
+		s.client = NewClient(cfg, logger, ClientWithHTTPClient(s.httpClient), ClientWithRetrier(s.retrier))
 	}
 
 	return s

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/goto/salt/log"
 	"github.com/goto/siren/core/notification"
 	"github.com/goto/siren/pkg/errors"
 	"github.com/goto/siren/pkg/retry"
@@ -66,7 +67,7 @@ func TestService_BuildData(t *testing.T) {
 				encryptorMock  = new(mocks.Encryptor)
 			)
 
-			svc := lark.NewPluginService(lark.AppConfig{}, encryptorMock, lark.WithLarkClient(larkClientMock))
+			svc := lark.NewPluginService(lark.AppConfig{}, log.NewNoop(), encryptorMock, lark.WithLarkClient(larkClientMock))
 
 			tc.Setup(larkClientMock, encryptorMock)
 
@@ -151,7 +152,7 @@ func TestService_Send(t *testing.T) {
 				tt.setup(mockLarkClient)
 			}
 
-			s := lark.NewPluginService(lark.AppConfig{}, nil, lark.WithLarkClient(mockLarkClient))
+			s := lark.NewPluginService(lark.AppConfig{}, log.NewNoop(), nil, lark.WithLarkClient(mockLarkClient))
 
 			got, err := s.Send(context.TODO(), tt.notificationMessage)
 			if (err != nil) != tt.wantErr {
@@ -223,7 +224,7 @@ func TestService_PreHookQueueTransformConfigs(t *testing.T) {
 				tt.setup(mockEncryptor)
 			}
 
-			s := lark.NewPluginService(lark.AppConfig{}, mockEncryptor)
+			s := lark.NewPluginService(lark.AppConfig{}, log.NewNoop(), mockEncryptor)
 			got, err := s.PreHookQueueTransformConfigs(context.TODO(), tt.notificationConfigMap)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Service.PreHookQueueTransformConfigs() error = %v, wantErr %v", err, tt.wantErr)
@@ -296,7 +297,7 @@ func TestService_PostHookQueueTransformConfigs(t *testing.T) {
 				tt.setup(mockEncryptor)
 			}
 
-			s := lark.NewPluginService(lark.AppConfig{}, mockEncryptor)
+			s := lark.NewPluginService(lark.AppConfig{}, log.NewNoop(), mockEncryptor)
 			got, err := s.PostHookQueueTransformConfigs(context.TODO(), tt.notificationConfigMap)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Service.PostHookQueueTransformConfigs() error = %v, wantErr %v", err, tt.wantErr)

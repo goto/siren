@@ -108,9 +108,9 @@ func InitDeps(
 
 	// plugin receiver services
 	slackPluginService := slack.NewPluginService(cfg.Receivers.Slack, encryptor)
-	larkPluginService := lark.NewPluginService(cfg.Receivers.Lark, encryptor)
+	larkPluginService := lark.NewPluginService(cfg.Receivers.Lark, logger, encryptor)
+	larkChannelPluginService := larkchannel.NewPluginService(cfg.Receivers.Lark, logger, encryptor)
 	slackChannelPluginService := slackchannel.NewPluginService(cfg.Receivers.Slack, encryptor)
-	larkChannelPluginService := larkchannel.NewPluginService(cfg.Receivers.Lark, encryptor)
 	pagerDutyPluginService := pagerduty.NewPluginService(cfg.Receivers.Pagerduty)
 	httpreceiverPluginService := httpreceiver.NewPluginService(logger, cfg.Receivers.HTTPReceiver)
 	filePluginService := file.NewPluginService()

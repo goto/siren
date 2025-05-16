@@ -82,12 +82,6 @@ type Message struct {
 	expiryDuration time.Duration
 }
 
-func (m *Message) UpdateValidDuration(dur time.Duration) {
-	if dur != 0 {
-		m.ExpiredAt = m.CreatedAt.Add(m.expiryDuration)
-	}
-}
-
 // Initialize initializes the message with some default value
 // or the customized value
 func InitMessage(
@@ -221,6 +215,10 @@ func InitMessageByMetaMessage(
 
 	for _, opt := range opts {
 		opt(m)
+	}
+
+	if validDur, ok := m.Configs["valid_duration"].(time.Duration); ok {
+		m.expiryDuration = validDur
 	}
 
 	if m.expiryDuration != 0 {

@@ -14,6 +14,7 @@ import (
 
 type PluginService struct {
 	base.UnimplementedService
+	appCfg     AppConfig
 	client     PagerDutyCaller
 	httpClient *httpclient.Client
 	retrier    retry.Runner
@@ -29,6 +30,8 @@ func NewPluginService(cfg AppConfig, opts ...ServiceOption) *PluginService {
 	if s.client == nil {
 		s.client = NewClient(cfg, ClientWithHTTPClient(s.httpClient), ClientWithRetrier(s.retrier))
 	}
+
+	s.appCfg = cfg
 
 	return s
 }
@@ -61,6 +64,7 @@ func (s *PluginService) PreHookQueueTransformConfigs(ctx context.Context, notifi
 }
 
 func (s *PluginService) Send(ctx context.Context, notificationMessage notification.Message) (bool, error) {
+	notificationMessage.UpdateValidDuration(s.appCfg.ValidDuration)
 	notificationConfig := &NotificationConfig{}
 	if err := mapstructure.Decode(notificationMessage.Configs, notificationConfig); err != nil {
 		return false, err

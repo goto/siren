@@ -3,6 +3,7 @@ package pagerduty
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/goto/siren/pkg/httpclient"
 	"github.com/goto/siren/pkg/retry"
@@ -11,9 +12,10 @@ import (
 
 // AppConfig is a config loaded when siren is started
 type AppConfig struct {
-	APIHost    string            `mapstructure:"api_host" yaml:"api_host"`
-	Retry      retry.Config      `mapstructure:"retry" yaml:"retry"`
-	HTTPClient httpclient.Config `mapstructure:"http_client" yaml:"http_client"`
+	APIHost       string            `mapstructure:"api_host" yaml:"api_host"`
+	Retry         retry.Config      `mapstructure:"retry" yaml:"retry"`
+	HTTPClient    httpclient.Config `mapstructure:"http_client" yaml:"http_client"`
+	ValidDuration time.Duration     `mapstructure:"valid_duration" yaml:"valid_duration"`
 }
 
 func (c AppConfig) Validate() error {

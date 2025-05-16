@@ -23,6 +23,7 @@ const (
 	MessageStatusFailed    MessageStatus = "failed"
 	MessageStatusPending   MessageStatus = "pending"
 	MessageStatusPublished MessageStatus = "published"
+	MessageStatusExpired   MessageStatus = "expired"
 )
 
 func (ms MessageStatus) String() string {
@@ -79,6 +80,12 @@ type Message struct {
 	Retryable bool
 
 	expiryDuration time.Duration
+}
+
+func (m *Message) UpdateValidDuration(dur time.Duration) {
+	if dur != 0 {
+		m.ExpiredAt = m.CreatedAt.Add(m.expiryDuration)
+	}
 }
 
 // Initialize initializes the message with some default value
@@ -294,5 +301,12 @@ func (m *Message) MarkPending(updatedAt time.Time) {
 func (m *Message) MarkPublished(updatedAt time.Time) {
 	m.TryCount = m.TryCount + 1
 	m.Status = MessageStatusPublished
+	m.UpdatedAt = updatedAt
+}
+
+// MarkExpired update message to the expired state
+func (m *Message) MarkExpired(updatedAt time.Time, err error) {
+	m.LastError = err.Error()
+	m.Status = MessageStatusExpired
 	m.UpdatedAt = updatedAt
 }

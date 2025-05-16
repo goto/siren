@@ -299,7 +299,7 @@ func TestService_BuildNotifications(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := alert.BuildNotifications(tt.alerts, tt.firingLen, time.Time{}, []string{})
+			got, err := alert.BuildNotifications(alert.Config{GroupBy: []string{}}, tt.alerts, tt.firingLen, time.Time{})
 			if (err != nil) && (err.Error() != tt.errString) {
 				t.Errorf("BuildNotifications() error = %v, wantErr %s", err, tt.errString)
 				return

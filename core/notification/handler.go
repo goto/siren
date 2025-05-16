@@ -26,6 +26,7 @@ type Handler struct {
 	supportedReceiverTypes []string
 	batchSize              int
 	metricHistMQDuration   metric.Int64Histogram
+	metricMessageStatus    metric.Int64Counter
 }
 
 // NewHandler creates a new handler with some supported type of Notifiers
@@ -35,6 +36,13 @@ func NewHandler(cfg HandlerConfig, logger log.Logger, q Queuer, registry map[str
 	if err != nil {
 		otel.Handle(err)
 	}
+
+	metricMessageStatus, err := otel.Meter("github.com/goto/siren/core/notification").
+		Int64Counter("siren.notification.queue.message.status")
+	if err != nil {
+		otel.Handle(err)
+	}
+
 	h := &Handler{
 		batchSize: defaultBatchSize,
 
@@ -42,6 +50,7 @@ func NewHandler(cfg HandlerConfig, logger log.Logger, q Queuer, registry map[str
 		notifierRegistry:     registry,
 		q:                    q,
 		metricHistMQDuration: metricHistMQDuration,
+		metricMessageStatus:  metricMessageStatus,
 	}
 
 	if cfg.BatchSize != 0 {
@@ -101,8 +110,20 @@ func (h *Handler) Process(ctx context.Context, runAt time.Time) error {
 
 func (h *Handler) errorMessageHandler(ctx context.Context, retryable bool, herr error, msg *Message) error {
 	msg.MarkFailed(time.Now(), retryable, herr)
+	h.incrementMessageStatus(ctx, msg)
+
 	if err := h.q.ErrorCallback(ctx, *msg); err != nil {
 		return fmt.Errorf("failed to execute error callback with receiver type %s and error %w", msg.ReceiverType, err)
+	}
+	return herr
+}
+
+func (h *Handler) expiredMessageHandler(ctx context.Context, herr error, msg *Message) error {
+	msg.MarkExpired(time.Now(), herr)
+	h.incrementMessageStatus(ctx, msg)
+
+	if err := h.q.ErrorCallback(ctx, *msg); err != nil {
+		return fmt.Errorf("failed to execute expired callback with receiver type %s and error %w", msg.ReceiverType, err)
 	}
 	return herr
 }
@@ -129,6 +150,7 @@ func (h *Handler) SingleMessageHandler(ctx context.Context, msg *Message) error 
 	}
 
 	msg.MarkPending(time.Now())
+	h.incrementMessageStatus(ctx, msg)
 
 	newConfig, err := notifier.PostHookQueueTransformConfigs(ctx, msg.Configs)
 	if err != nil {
@@ -136,11 +158,16 @@ func (h *Handler) SingleMessageHandler(ctx context.Context, msg *Message) error 
 	}
 	msg.Configs = newConfig
 
+	if !msg.ExpiredAt.IsZero() && time.Now().After(msg.ExpiredAt) {
+		return h.expiredMessageHandler(ctx, errors.ErrInvalid.WithMsgf("message expired at %s", msg.ExpiredAt), msg)
+	}
+
 	if retryable, err := notifier.Send(ctx, *msg); err != nil {
 		return h.errorMessageHandler(ctx, retryable, err, msg)
 	}
 
 	msg.MarkPublished(time.Now())
+	h.incrementMessageStatus(ctx, msg)
 
 	if err := h.q.SuccessCallback(ctx, *msg); err != nil {
 		return err
@@ -157,6 +184,15 @@ func (h *Handler) instrumentMQDuration(ctx context.Context, msg *Message) {
 			attribute.Int("try_count", msg.TryCount),
 			attribute.Int("max_try", msg.MaxTries),
 			attribute.Bool("retryable", msg.Retryable),
+		),
+	)
+}
+
+func (h *Handler) incrementMessageStatus(ctx context.Context, msg *Message) {
+	h.metricMessageStatus.Add(
+		ctx, 1, metric.WithAttributes(
+			attribute.String("receiver_type", msg.ReceiverType),
+			attribute.String("status", string(msg.Status)),
 		),
 	)
 }

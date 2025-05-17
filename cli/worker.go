@@ -137,8 +137,6 @@ func StartNotificationHandlerWorker(ctx context.Context, cfg config.Config, canc
 		return err
 	}
 
-	defer cleanUpTelemetry()
-
 	_, pgClient, notifierRegistry, _, err := InitDeps(ctx, logger, cfg, nil, false)
 	if err != nil {
 		return err
@@ -163,6 +161,8 @@ func StartNotificationHandlerWorker(ctx context.Context, cfg config.Config, canc
 		notification.HandlerWithIdentifier(workerTicker.GetID()))
 
 	go func() {
+		defer cleanUpTelemetry()
+
 		workerTicker.Run(ctx, cancelWorkerChan, func(ctx context.Context, runningAt time.Time) error {
 			return notificationHandler.Process(ctx, runningAt)
 		})
@@ -183,8 +183,6 @@ func StartNotificationDLQHandlerWorker(ctx context.Context, cfg config.Config, c
 	if err != nil {
 		return err
 	}
-
-	defer cleanUpTelemetry()
 
 	_, pgClient, notifierRegistry, _, err := InitDeps(ctx, logger, cfg, nil, false)
 	if err != nil {
@@ -210,6 +208,8 @@ func StartNotificationDLQHandlerWorker(ctx context.Context, cfg config.Config, c
 	notificationHandler := notification.NewHandler(cfg.Notification.DLQHandler, logger, queue, notifierRegistry,
 		notification.HandlerWithIdentifier("dlq-"+workerTicker.GetID()))
 	go func() {
+		defer cleanUpTelemetry()
+
 		workerTicker.Run(ctx, cancelWorkerChan, func(ctx context.Context, runningAt time.Time) error {
 			return notificationHandler.Process(ctx, runningAt)
 		})

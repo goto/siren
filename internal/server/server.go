@@ -34,8 +34,8 @@ const defaultGracePeriod = 5 * time.Second
 
 type GRPCConfig struct {
 	Port           int `yaml:"port" mapstructure:"port" default:"8081"`
-	MaxRecvMsgSize int `yaml:"max_recv_msg_size" mapstructure:"max_recv_msg_size" default:"33554432"`
-	MaxSendMsgSize int `yaml:"max_send_msg_size" mapstructure:"max_send_msg_size" default:"33554432"`
+	MaxRecvMsgSize int `yaml:"max_recv_msg_size" mapstructure:"max_recv_msg_size" default:"4194304"`
+	MaxSendMsgSize int `yaml:"max_send_msg_size" mapstructure:"max_send_msg_size" default:"4194304"`
 }
 
 type Config struct {
@@ -98,7 +98,14 @@ func RunServer(
 	grpcDialCtx, grpcDialCancel := context.WithTimeout(ctx, time.Second*5)
 	defer grpcDialCancel()
 
-	grpcConn, err := grpc.DialContext(grpcDialCtx, c.grpcAddr(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcConn, err := grpc.DialContext(
+		grpcDialCtx,
+		c.grpcAddr(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(c.GRPC.MaxRecvMsgSize),
+			grpc.MaxCallSendMsgSize(c.GRPC.MaxSendMsgSize),
+		))
 	if err != nil {
 		return err
 	}

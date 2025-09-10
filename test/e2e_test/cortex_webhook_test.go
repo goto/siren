@@ -50,7 +50,9 @@ func (s *CortexWebhookTestSuite) SetupTest() {
 	s.appConfig.Service = server.Config{
 		Port: apiHTTPPort,
 		GRPC: server.GRPCConfig{
-			Port: apiGRPCPort,
+			Port:           apiGRPCPort,
+			MaxRecvMsgSize: 4194304,
+			MaxSendMsgSize: 4194304,
 		},
 		EncryptionKey: testEncryptionKey,
 	}

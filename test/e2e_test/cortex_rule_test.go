@@ -40,7 +40,9 @@ func (s *CortexRuleTestSuite) SetupTest() {
 	s.appConfig.Log.Level = "error"
 	s.appConfig.Service = server.Config{
 		GRPC: server.GRPCConfig{
-			Port: apiPort,
+			Port:           apiPort,
+			MaxRecvMsgSize: 4194304,
+			MaxSendMsgSize: 4194304,
 		},
 		EncryptionKey: testEncryptionKey,
 	}

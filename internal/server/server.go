@@ -34,8 +34,8 @@ const defaultGracePeriod = 5 * time.Second
 
 type GRPCConfig struct {
 	Port           int `yaml:"port" mapstructure:"port" default:"8081"`
-	MaxRecvMsgSize int `yaml:"max_recv_msg_size" mapstructure:"max_recv_msg_size" default:"33554432"`
-	MaxSendMsgSize int `yaml:"max_send_msg_size" mapstructure:"max_send_msg_size" default:"33554432"`
+	MaxRecvMsgSize int `yaml:"max_recv_msg_size" mapstructure:"max_recv_msg_size" default:"4194304"`
+	MaxSendMsgSize int `yaml:"max_send_msg_size" mapstructure:"max_send_msg_size" default:"4194304"`
 }
 
 type Config struct {

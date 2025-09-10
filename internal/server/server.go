@@ -98,7 +98,14 @@ func RunServer(
 	grpcDialCtx, grpcDialCancel := context.WithTimeout(ctx, time.Second*5)
 	defer grpcDialCancel()
 
-	grpcConn, err := grpc.DialContext(grpcDialCtx, c.grpcAddr(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcConn, err := grpc.DialContext(
+		grpcDialCtx,
+		c.grpcAddr(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(c.GRPC.MaxRecvMsgSize),
+			grpc.MaxCallSendMsgSize(c.GRPC.MaxSendMsgSize),
+		))
 	if err != nil {
 		return err
 	}
